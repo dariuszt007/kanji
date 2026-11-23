@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kanji Path</title>
+<style>
+:root{
+  --bg:#f5f3ee;--paper:#fff;--ink:#252b32;--muted:#68717a;
+  --accent:#b34838;--line:#e5e0d8;--soft:#f1ebe5;--green:#396b57;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:#282e34;color:#fff;padding:20px max(18px,calc((100vw - 1120px)/2));display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+header h1{font-size:23px;margin:0}
+header p{margin:3px 0 0;color:#d6dce0;font-size:13px}
+main{max-width:1120px;margin:22px auto;padding:0 16px}
+nav,.row,.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+nav{margin-bottom:18px}
+button,input,select,textarea{font:inherit}
+button{border:0;border-radius:10px;background:var(--accent);color:#fff;padding:10px 14px;cursor:pointer;font-weight:650}
+button:hover{filter:brightness(.95)}
+button:disabled{opacity:.55;cursor:not-allowed}
+button.secondary{background:#e9e4dc;color:var(--ink)}
+button.active{background:var(--green);color:#fff}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px;background:#fff;color:var(--ink)}
+label{display:grid;gap:5px;color:var(--muted);font-size:13px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+.filters{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:end}
+.columns{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:16px}
+#cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:9px}
+.tile{min-height:104px;display:flex;flex-direction:column;justify-content:center;text-align:center;background:white;color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px}
+.tile:hover,.tile.selected{border-color:var(--accent);box-shadow:0 0 0 2px #b3483822}
+.glyph,.bigkanji,.daily-kanji{font-family:"Yu Gothic","Meiryo","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif}
+.glyph{display:block;min-height:50px;font-size:40px;line-height:1.25;color:#20262c}
+.tile small{display:block;margin-top:5px;color:var(--muted);overflow-wrap:anywhere}
+.bigkanji{font-size:84px;line-height:1}
+.hero{display:flex;gap:20px;align-items:center}
+h2,h3{margin:0 0 10px}
+h2{font-size:21px}h3{font-size:16px}
+.muted{color:var(--muted)}
+.tag{display:inline-block;background:var(--soft);border-radius:20px;padding:3px 9px;margin:2px;font-size:12px}
+.example{border-top:1px solid var(--line);padding:12px 0}
+.example-ja{font-size:20px;margin-top:7px}
+ruby{ruby-position:over}rt{font-size:.55em;color:var(--muted)}
+.daily{border-left:5px solid var(--accent);background:linear-gradient(120deg,#fff 65%,#f7eee8)}
+.daily-content{display:flex;align-items:center;gap:18px}
+.daily-kanji{font-size:62px;line-height:1}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.example-editor{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;background:#fcfbf9}
+.example-editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.hidden{display:none!important}
+.status{font-size:13px;color:var(--muted)}
+.notice{background:#fff6df;border:1px solid #f0dda9;padding:12px;border-radius:10px;font-size:13px}
+footer{max-width:1120px;margin:26px auto;padding:0 16px 30px;color:var(--muted);font-size:12px}
+@media(max-width:760px){.filters{grid-template-columns:1fr 1fr}.filters label:first-child{grid-column:span 2}.columns{grid-template-columns:1fr}.hero{align-items:flex-start}.bigkanji{font-size:70px}}
+@media(max-width:560px){.daily-content{align-items:flex-start}.example-editor-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Kanji Path</h1><p>Kanji i japońskie słownictwo — ucz się we własnym tempie</p></div>
+  <div class="row">
+    <span id="status" class="status" style="color:#e3e8eb">Wczytuję JSON…</span>
+    <button id="refresh" class="secondary">Odśwież z JSON</button>
+    <button id="copyJson">Kopiuj JSON</button>
+  </div>
+</header>
+
+<main>
+  <nav>
+    <button class="tab active" data-tab="learn">Nauka</button>
+    <button class="tab secondary" data-tab="manage">Edytuj / dodaj kanji</button>
+    <button class="tab secondary" data-tab="settings">Ustawienia</button>
+  </nav>
+
+  <section id="learn" class="view">
+    <div class="panel daily">
+      <span class="tag">CODZIENNA LEKCJA</span>
+      <h2>Kanji dnia</h2>
+      <p id="dailyDate" class="muted"></p>
+      <div id="dailyContent"></div>
+    </div>
+
+    <div class="panel filters">
+      <label>Szukaj kanji, słowa lub tłumaczenia
+        <input id="search" placeholder="np. 日, dzień, sun">
+      </label>
+      <label>Poziom JLPT
+        <select id="level">
+          <option value="all">Wszystkie</option>
+          <option>N5</option><option>N4</option><option>N3</option><option>N2</option><option>N1</option>
+        </select>
+      </label>
+      <label>Klasa japońska
+        <select id="grade">
+          <option value="all">Wszystkie</option>
+          <option value="1">Klasa 1</option><option value="2">Klasa 2</option>
+          <option value="3">Klasa 3</option><option value="4">Klasa 4</option>
+          <option value="5">Klasa 5</option><option value="6">Klasa 6</option>
+          <option value="8">Szkoła średnia</option>
+        </select>
+      </label>
+      <button id="clear" class="secondary">Wyczyść</button>
+    </div>
+
+    <div class="columns">
+      <div class="panel">
+        <div class="row" style="justify-content:space-between">
+          <h2>Lista kanji</h2><span id="count" class="muted"></span>
+        </div>
+        <div id="cards"></div>
+        <p id="listHint" class="muted"></p>
+      </div>
+      <div id="detail" class="panel">
+        <p class="muted">Wybierz znak z listy.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="manage" class="view hidden">
+    <div class="panel">
+      <h2 id="formTitle">Dodaj kanji</h2>
+      <p class="muted">Wpisy są edytowane w pamięci strony. Kliknij „Kopiuj JSON”, a następnie wklej wynik do `data.json` w repozytorium.</p>
+
+      <form id="kanjiForm">
+        <input type="hidden" id="originalCharacter">
+        <div class="settings-grid">
+          <label>Kanji *
+            <input id="character" required maxlength="2" placeholder="日">
+          </label>
+          <label>Klasa szkolna
+            <input id="gradeInput" type="number" min="1" max="9">
+          </label>
+          <label>JLPT (poziom przybliżony)
+            <select id="jlptInput">
+              <option value="">Nieprzypisany</option>
+              <option>N5</option><option>N4</option><option>N3</option><option>N2</option><option>N1</option>
+            </select>
+          </label>
+          <label>Znaczenie po polsku
+            <input id="meaningPL" placeholder="np. słońce; dzień">
+          </label>
+          <label>Znaczenie po angielsku
+            <input id="meaningEN" placeholder="e.g. sun; day">
+          </label>
+          <label>On’yomi — rozdziel przecinkami
+            <input id="onyomiInput" placeholder="ニチ, ジツ">
+          </label>
+          <label>Kun’yomi — rozdziel przecinkami
+            <input id="kunyomiInput" placeholder="ひ, か">
+          </label>
+        </div>
+
+        <h3 style="margin-top:18px">Przykładowe słowa i zdania</h3>
+        <div id="examples"></div>
+        <button type="button" id="addExample" class="secondary">+ Dodaj słowo / zdanie</button>
+
+        <div class="actions">
+          <button type="submit">Zapisz kanji</button>
+          <button type="button" id="newEntry" class="secondary">Nowy wpis</button>
+        </div>
+      </form>
+
+      <div class="notice" style="margin-top:16px">
+        Przycisk „Odśwież z JSON” ponownie pobiera wyłącznie `data.json` i odrzuca niezapisane zmiany w stronie.
+        GitHub Pages nie zapisuje pliku w repozytorium automatycznie.
+      </div>
+    </div>
+  </section>
+
+  <section id="settings" class="view hidden">
+    <div class="panel">
+      <h2>Ustawienia</h2>
+      <div class="settings-grid">
+        <label>Język tłumaczenia
+          <select id="language">
+            <option value="pl">Polski</option>
+            <option value="en">English</option>
+            <option value="both">Polski i angielski</option>
+          </select>
+        </label>
+      </div>
+      <p class="notice">
+        Gdy wybierzesz polski, a rekord nie ma polskiego tłumaczenia, wyświetli się angielskie.
+        Dopisane przez Ciebie polskie znaczenie jest zapisywane w danych JSON.
+        JLPT jest oznaczeniem przybliżonym, nie oficjalnym wykazem egzaminatora.
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Czcionki korzystają z fontów systemowych: japońskie znaki z Yu Gothic, Meiryo, Hiragino lub Noto Sans JP,
+  a tekst polski i angielski z domyślnego fontu systemu. Jeśli danej czcionki nie ma na urządzeniu,
+  przeglądarka użyje kolejnej dostępnej.
+</footer>
+
+<script>
+(() => {
+"use strict";
+
+const DATA_URL = "./data.json";
+const SETTINGS_KEY = "kanjipath.settings.v3";
+const DAILY_KEY = "kanjipath.daily.v3";
+
+const $ = s => document.querySelector(s);
+const 
+$$ = s => [...document.querySelectorAll(s)];
+
+let records = [];
+let selectedCharacter = "";
+let settings = readStorage(SETTINGS_KEY, { language: "pl" });
+let dailyDone = readStorage(DAILY_KEY, {});
+
+function readStorage(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+  catch { return fallback; }
+}
+function store(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+function escapeHTML(value = "") {
+  return String(value).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+function normalizeRecord(item) {
+  return {
+    character: String(item.character || "").trim(),
+    grade: item.grade || "",
+    jlpt: item.jlpt || "",
+    meanings: {
+      pl: item.meanings?.pl || "",
+      en: item.meanings?.en || ""
+    },
+    onyomi: Array.isArray(item.onyomi) ? item.onyomi : [],
+    kunyomi: Array.isArray(item.kunyomi) ? item.kunyomi : [],
+    strokes: item.strokes || "",
+    examples: Array.isArray(item.examples) ? item.examples.map(example => ({
+      word: example.word || "",
+      reading: example.reading || "",
+      wordMeaning: {
+        pl: example.wordMeaning?.pl || "",
+        en: example.wordMeaning?.en || ""
+      },
+      sentence: example.sentence || "",
+      sentenceMeaning: {
+        pl: example.sentenceMeaning?.pl || "",
+        en: example.sentenceMeaning?.en || ""
+      }
+    })) : []
+  };
+}
+function showTranslation(pl, en) {
+  pl = String(pl || "").trim();
+  en = String(en || "").trim();
+
+  if (settings.language === "en") {
+    return escapeHTML(en || pl || "Translation unavailable");
+  }
+  if (settings.language === "both") {
+    if (pl && en) return `${escapeHTML(pl)} <span class="muted">/</span> ${escapeHTML(en)}`;
+    return escapeHTML(pl || en || "Brak tłumaczenia / Translation unavailable");
+  }
+  // Polski: zgodnie z prośbą użyj angielskiego jako zamiennika,
+  // jeśli polskiego tłumaczenia jeszcze nie wpisano.
+  return escapeHTML(pl || en || "Brak tłumaczenia");
+}
+function localDateKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function filteredRecords() {
+  const query = $("#search").value.trim().toLowerCase();
+  const level = $("#level").value;
+  const grade = $("#grade").value;
+
+  return records.filter(item => {
+    if (level !== "all" && item.jlpt !== level) return false;
+    if (grade !== "all" && String(item.grade) !== grade) return false;
+    const text = [
+      item.character, item.meanings.pl, item.meanings.en,
+      ...item.onyomi, ...item.kunyomi,
+      ...item.examples.flatMap(e => [
+        e.word, e.reading, e.wordMeaning.pl, e.wordMeaning.en,
+        e.sentence, e.sentenceMeaning.pl, e.sentenceMeaning.en
+      ])
+    ].join(" ").toLowerCase();
+    return !query || text.includes(query);
+  }).sort((a,b) => a.character.localeCompare(b.character));
+}
+async function loadJSON() {
+  $("#status").textContent = "Wczytuję data.json…";
+  try {
+    const response = await fetch(`${DATA_URL}?refresh=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!data || !Array.isArray(data.kanji)) throw new Error("JSON musi zawierać tablicę kanji");
+
+    records = data.kanji
+      .map(normalizeRecord)
+      .filter(item => item.character);
+
+    selectedCharacter = "";
+    $("#status").textContent = `Wczytano ${records.length.toLocaleString("pl-PL")} kanji z data.json`;
+    renderAll();
+  } catch (error) {
+    $("#status").textContent = "Błąd wczytywania data.json";
+    $("#detail").innerHTML = `
+      <p>Nie udało się wczytać <code>data.json</code>.</p>
+      <p class="muted">${escapeHTML(error.message)}</p>
+      <p>Sprawdź, czy plik istnieje w tym samym katalogu co index.html i jest poprawnym JSON-em.</p>`;
+  }
+}
+function renderAll() {
+  renderList();
+  renderDaily();
+  if (selectedCharacter) renderDetail(selectedCharacter);
+}
+function renderList() {
+  const all = filteredRecords();
+  const visible = all.slice(0, 250);
+  $("#count").textContent = `${all.length.toLocaleString("pl-PL")} wyników`;
+  $("#listHint").textContent = all.length > visible.length
+    ? `Wyświetlam pierwsze ${visible.length}. Wpisz znak lub zawęź filtry.`
+    : "";
+
+  $("#cards").innerHTML = visible.map(item => `
+    <button type="button" class="tile ${item.character === selectedCharacter ? "selected" : ""}"
+      data-character="${escapeHTML(item.character)}">
+      <span class="glyph">${escapeHTML(item.character)}</span>
+      <small>${showTranslation(item.meanings.pl, item.meanings.en)}</small>
+    </button>
+  `).join("");
+
+  $$("#cards [data-character]").forEach(button => {
+    button.addEventListener("click", () => {
+      selectedCharacter = button.dataset.character;
+      renderList();
+      renderDetail(selectedCharacter);
+    });
+  });
+}
+function renderDetail(character) {
+  const item = records.find(x => x.character === character);
+  if (!item) return;
+
+  const examplesHTML = item.examples.length
+    ? item.examples.map(example => `
+      <div class="example">
+        <h3>${escapeHTML(example.word || "Przykład")}</h3>
+        ${example.reading ? `<div class="muted">${escapeHTML(example.reading)}</div>` : ""}
+        ${(example.wordMeaning.pl || example.wordMeaning.en)
+          ? `<div>${showTranslation(example.wordMeaning.pl, example.wordMeaning.en)}</div>` : ""}
+        ${example.sentence ? `<div class="example-ja">${escapeHTML(example.sentence)}</div>` : ""}
+        ${(example.sentenceMeaning.pl || example.sentenceMeaning.en)
+          ? `<div>${showTranslation(example.sentenceMeaning.pl, example.sentenceMeaning.en)}</div>` : ""}
+      </div>
+    `).join("")
+    : `<p class="muted">Brak przykładów. Edytuj kanji i dodaj dowolną liczbę słów oraz zdań.</p>`;
+
+  $("#detail").innerHTML = `
+    <div class="hero">
+      <div class="bigkanji">${escapeHTML(item.character)}</div>
+      <div>
+        <h2>${escapeHTML(item.character)}</h2>
+        <div>${showTranslation(item.meanings.pl, item.meanings.en)}</div>
+        ${item.jlpt ? `<span class="tag">JLPT ${escapeHTML(item.jlpt)} · przybliżony</span>` : ""}
+        ${item.grade ? `<span class="tag">Klasa ${escapeHTML(item.grade)}</span>` : ""}
+        ${item.strokes ? `<span class="tag">${escapeHTML(item.strokes)} kresek</span>` : ""}
+      </div>
+    </div>
+    <div class="example">
+      <h3>Odczyty</h3>
+      <p><b>On’yomi:</b> ${escapeHTML(item.onyomi.join("、") || "—")}</p>
+      <p><b>Kun’yomi:</b> ${escapeHTML(item.kunyomi.join("、") || "—")}</p>
+    </div>
+    <div class="example">
+      <h3>Przykładowe słowa i zdania (${item.examples.length})</h3>
+      ${examplesHTML}
+    </div>
+    <div class="actions">
+      <button type="button" id="editSelected">Edytuj kanji</button>
+      <button type="button" class="secondary" id="speakSelected">Odsłuchaj</button>
+    </div>
+  `;
+
+  $("#editSelected").addEventListener("click", () => openEditor(character));
+  $("#speakSelected").addEventListener("click", () => {
+    if (!("speechSynthesis" in window)) return alert("Synteza mowy nie jest dostępna.");
+    const utterance = new SpeechSynthesisUtterance(character);
+    utterance.lang = "ja-JP";
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  });
+}
+function renderDaily() {
+  const dateKey = localDateKey();
+  $("#dailyDate").textContent = new Intl.DateTimeFormat("pl-PL", {
+    weekday:"long", day:"numeric", month:"long"
+  }).format(new Date());
+
+  const pool = filteredRecords();
+  if (!pool.length) {
+    $("#dailyContent").innerHTML = `<p class="muted">Brak kanji w wybranym filtrze.</p>`;
+    return;
+  }
+
+  // Deterministyczny wybór: ten sam dzień i filtr daje ten sam znak.
+  const filterKey = `${$("#level").value}|${$("#grade").value}`;
+  const seedText = `${dateKey}|${filterKey}`;
+  let seed = 0;
+  for (const char of seedText) seed = (seed * 31 + char.charCodeAt(0)) >>> 0;
+  const item = pool[seed % pool.length];
+  const done = readStorage(DAILY_KEY, {})[`${dateKey}|${filterKey}`] === item.character;
+
+  $("#dailyContent").innerHTML = `
+    <div class="daily-content">
+      <div class="daily-kanji">${escapeHTML(item.character)}</div>
+      <div>
+        <h3>${showTranslation(item.meanings.pl, item.meanings.en)}</h3>
+        ${item.jlpt ? `<span class="tag">JLPT ${escapeHTML(item.jlpt)} · przybliżony</span>` : ""}
+        ${item.grade ? `<span class="tag">Klasa ${escapeHTML(item.grade)}</span>` : ""}
+        <div class="actions">
+          <button id="openDaily">Otwórz kartę</button>
+          <button id="markDaily" class="secondary" ${done ? "disabled" : ""}>
+            ${done ? "Przerobione dziś" : "Oznacz jako przerobione"}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  $("#openDaily").addEventListener("click", () => {
+    selectedCharacter = item.character;
+    renderDetail(item.character);
+    renderList();
+    $("#detail").scrollIntoView({behavior:"smooth", block:"start"});
+  });
+
+  $("#markDaily").addEventListener("click", () => {
+    const saved = readStorage(DAILY_KEY, {});
+    saved[`${dateKey}|${filterKey}`] = item.character;
+    store(DAILY_KEY, saved);
+    renderDaily();
+  });
+}
+function addExampleEditor(example = {}) {
+  const container = document.createElement("div");
+  container.className = "example-editor";
+  container.innerHTML = `
+    <div class="example-editor-grid">
+      <label>Słowo po japońsku<input data-field="word" value="${escapeHTML(example.word || "")}"></label>
+      <label>Odczyt słowa<input data-field="reading" value="${escapeHTML(example.reading || "")}"></label>
+      <label>Znaczenie słowa — PL<input data-field="wordPL" value="${escapeHTML(example.wordMeaning?.pl || "")}"></label>
+      <label>Word meaning — EN<input data-field="wordEN" value="${escapeHTML(example.wordMeaning?.en || "")}"></label>
+      <label>Zdanie po japońsku<textarea data-field="sentence">${escapeHTML(example.sentence || "")}</textarea></label>
+      <label>Zdanie po polsku<textarea data-field="sentencePL">${escapeHTML(example.sentenceMeaning?.pl || "")}</textarea></label>
+      <label>Sentence in English<textarea data-field="sentenceEN">${escapeHTML(example.sentenceMeaning?.en || "")}</textarea></label>
+    </div>
+    <button type="button" class="secondary removeExample" style="margin-top:8px">Usuń przykład</button>
+  `;
+  container.querySelector(".removeExample").addEventListener("click", () => container.remove());
+  $("#examples").appendChild(container);
+}
+function openEditor(character = "") {
+  const item = records.find(x => x.character === character);
+  $("#kanjiForm").reset();
+  $("#examples").innerHTML = "";
+  $("#originalCharacter").value = item?.character || "";
+  $("#character").value = item?.character || "";
+  $("#gradeInput").value = item?.grade || "";
+  $("#jlptInput").value = item?.jlpt || "";
+  $("#meaningPL").value = item?.meanings.pl || "";
+  $("#meaningEN").value = item?.meanings.en || "";
+  $("#onyomiInput").value = (item?.onyomi || []).join(", ");
+  $("#kunyomiInput").value = (item?.kunyomi || []).join(", ");
+  $("#formTitle").textContent = item ? `Edytuj kanji ${item.character}` : "Dodaj kanji";
+  (item?.examples || []).forEach(addExampleEditor);
+  if (!item) addExampleEditor();
+  showTab("manage");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function saveEditor(event) {
+  event.preventDefault();
+  const character = $("#character").value.trim();
+  if (!character) return;
+
+  const examples = 
+$$(".example-editor").map(row => {
+    const get = name => row.querySelector(`[data-field="${name}"]`).value.trim();
+    return {
+      word:get("word"),
+      reading:get("reading"),
+      wordMeaning:{pl:get("wordPL"),en:get("wordEN")},
+      sentence:get("sentence"),
+      sentenceMeaning:{pl:get("sentencePL"),en:get("sentenceEN")}
+    };
+  }).filter(example => Object.values(example).some(value =>
+    typeof value === "string" ? value : Object.values(value).some(Boolean)
+  ));
+
+  const record = normalizeRecord({
+    character,
+    grade:$("#gradeInput").value,
+    jlpt:$("#jlptInput").value,
+    meanings:{pl:$("#meaningPL").value.trim(),en:$("#meaningEN").value.trim()},
+    onyomi:$("#onyomiInput").value.split(/[,;،]/).map(x=>x.trim()).filter(Boolean),
+    kunyomi:$("#kunyomiInput").value.split(/[,;،]/).map(x=>x.trim()).filter(Boolean),
+    examples
+  });
+
+  const original = $("#originalCharacter").value;
+  if (original && original !== character) {
+    records = records.filter(item => item.character !== original);
+  }
+  const index = records.findIndex(item => item.character === character);
+  if (index >= 0) records[index] = record;
+  else records.push(record);
+
+  selectedCharacter = character;
+  renderAll();
+  renderDetail(character);
+  $("#status").textContent = "Zmiana jest w pamięci strony. Skopiuj JSON i zapisz go w repozytorium.";
+  showTab("learn");
+}
+function showTab(id) {
+  $$(".view").forEach(view => view.classList.toggle("hidden", view.id !== id));
+  $$(".tab").forEach(button => {
+    const active = button.dataset.tab === id;
+    button.classList.toggle("active", active);
+    button.classList.toggle("secondary", !active);
+  });
+}
+async function copyJSON() {
+  const text = JSON.stringify({version:1, kanji:records}, null, 2);
+  try {
+    await navigator.clipboard.writeText(text);
+    $("#status").textContent = "JSON skopiowany. Wklej go do data.json i zatwierdź zmianę na GitHubie.";
+  } catch {
+    const area = document.createElement("textarea");
+    area.value = text;
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand("copy");
+    area.remove();
+    $("#status").textContent = "JSON skopiowany. Wklej go do data.json i zatwierdź zmianę na GitHubie.";
+  }
+}
+
+$("#kanjiForm").addEventListener("submit", saveEditor);
+$("#addExample").addEventListener("click", () => addExampleEditor());
+$("#newEntry").addEventListener("click", () => openEditor(""));
+$("#copyJson").addEventListener("click", copyJSON);
+$("#refresh").addEventListener("click", loadJSON);
+$("#language").value = settings.language || "pl";
+$("#language").addEventListener("change", () => {
+  settings.language = $("#language").value;
+  store(SETTINGS_KEY, settings);
+  renderAll();
+});
+$("#search").addEventListener("input", renderList);
+["level","grade"].forEach(id => {
+  $("#" + id).addEventListener("change", () => {
+    renderList();
+    renderDaily();
+  });
+});
+$("#clear").addEventListener("click", () => {
+  $("#search").value = "";
+  $("#level").value = "all";
+  $("#grade").value = "all";
+  renderAll();
+});
+$$(".tab").forEach(button => {
+  button.addEventListener("click", () => showTab(button.dataset.tab));
+});
+
+loadJSON();
+})();
+</script>
+</body>
+</html>

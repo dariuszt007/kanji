@@ -8,7 +8,10 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap"
+    rel="stylesheet"
+  >
 
   <link rel="stylesheet" href="./style.css">
   <script src="./app.js" defer></script>
@@ -19,10 +22,15 @@
       <h1>Kanji Path</h1>
       <p>Kanji i japońskie słownictwo — ucz się we własnym tempie</p>
     </div>
+
     <div class="header-actions">
       <span id="status" class="header-status">Wczytuję data.json…</span>
-      <button id="refresh" class="button secondary" type="button">Odśwież z JSON</button>
-      <button id="copyJson" class="button" type="button">Kopiuj JSON</button>
+      <button id="refresh" class="button secondary" type="button">
+        Odśwież z JSON
+      </button>
+      <button id="copyJson" class="button" type="button">
+        Kopiuj JSON
+      </button>
     </div>
   </header>
 
@@ -43,10 +51,13 @@
       </article>
 
       <section class="panel filters" aria-label="Filtry kanji">
-        <label>Szukaj kanji, słowa lub tłumaczenia
+        <label>
+          Szukaj kanji, słowa lub tłumaczenia
           <input id="search" placeholder="np. 日, dzień, sun">
         </label>
-        <label>Poziom JLPT
+
+        <label>
+          Poziom JLPT
           <select id="level">
             <option value="all">Wszystkie</option>
             <option>N5</option>
@@ -56,7 +67,9 @@
             <option>N1</option>
           </select>
         </label>
-        <label>Klasa podstawowa
+
+        <label>
+          Klasa podstawowa
           <select id="grade">
             <option value="all">Wszystkie</option>
             <option value="1">Klasa 1</option>
@@ -67,7 +80,10 @@
             <option value="6">Klasa 6</option>
           </select>
         </label>
-        <button id="clear" class="button secondary" type="button">Wyczyść</button>
+
+        <button id="clear" class="button secondary" type="button">
+          Wyczyść
+        </button>
       </section>
 
       <div class="columns">
@@ -90,7 +106,7 @@
       <section class="panel">
         <h2 id="formTitle">Dodaj kanji</h2>
         <p class="muted">
-          Zmiany są zapisywane lokalnie w tej przeglądarce. Pobierz JSON i wgraj
+          Zmiany zapisują się lokalnie w tej przeglądarce. Pobierz JSON i wgraj
           go do repozytorium, aby zapisać je na GitHubie.
         </p>
 
@@ -98,13 +114,18 @@
           <input type="hidden" id="originalCharacter">
 
           <div class="form-grid">
-            <label>Kanji *
+            <label>
+              Kanji *
               <input id="character" required placeholder="日">
             </label>
-            <label>Klasa podstawowa (1–6)
+
+            <label>
+              Klasa podstawowa (1–6)
               <input id="gradeInput" type="number" min="1" max="6">
             </label>
-            <label>Etap szkoły
+
+            <label>
+              Etap szkoły
               <select id="stageInput">
                 <option value="">Nieokreślony</option>
                 <option value="小学校">Szkoła podstawowa</option>
@@ -112,7 +133,9 @@
                 <option value="高等学校">High school</option>
               </select>
             </label>
-            <label>JLPT — poziom przybliżony
+
+            <label>
+              JLPT — poziom przybliżony
               <select id="jlptInput">
                 <option value="">Nieprzypisany</option>
                 <option>N5</option>
@@ -122,19 +145,29 @@
                 <option>N1</option>
               </select>
             </label>
-            <label>Liczba kresek
+
+            <label>
+              Liczba kresek
               <input id="strokesInput" type="number" min="1">
             </label>
-            <label>Znaczenie po polsku
+
+            <label>
+              Znaczenie po polsku
               <input id="meaningPL" placeholder="np. słońce; dzień">
             </label>
-            <label>Znaczenie po angielsku
+
+            <label>
+              Znaczenie po angielsku
               <input id="meaningEN" placeholder="e.g. sun; day">
             </label>
-            <label>On’yomi — oddziel przecinkami
+
+            <label>
+              On’yomi — oddziel przecinkami
               <input id="onyomiInput" placeholder="ニチ, ジツ">
             </label>
-            <label>Kun’yomi — oddziel przecinkami
+
+            <label>
+              Kun’yomi — oddziel przecinkami
               <input id="kunyomiInput" placeholder="ひ, か">
             </label>
           </div>
@@ -147,9 +180,13 @@
             <div id="characterFuriganaEditor" class="furigana-editor"></div>
           </section>
 
-          <label class="extra-label">Pozostałe pola rekordu JSON
-            <textarea id="extraFields" spellcheck="false"
-              placeholder='{"radical":"日","notes":"własna notatka"}'></textarea>
+          <label class="extra-label">
+            Pozostałe pola rekordu JSON
+            <textarea
+              id="extraFields"
+              spellcheck="false"
+              placeholder='{"radical":"日","notes":"własna notatka"}'
+            ></textarea>
           </label>
 
           <h3 class="examples-title">Słowa i zdania</h3>
@@ -161,19 +198,26 @@
 
           <div class="button-row">
             <button class="button" type="submit">Zapisz kanji</button>
-            <button id="newEntry" class="button secondary" type="button">Nowy wpis</button>
-            <button id="exportFile" class="button secondary" type="button">Pobierz pełny JSON</button>
+            <button id="newEntry" class="button secondary" type="button">
+              Nowy wpis
+            </button>
+            <button id="exportFile" class="button secondary" type="button">
+              Pobierz pełny JSON
+            </button>
           </div>
         </form>
 
         <div class="form-grid import-controls">
-          <label>Tryb importu
+          <label>
+            Tryb importu
             <select id="importMode">
               <option value="merge">Scal z obecną bazą</option>
               <option value="replace">Zastąp całą bazę</option>
             </select>
           </label>
-          <label>Importuj plik JSON
+
+          <label>
+            Importuj plik JSON
             <input id="importFile" type="file" accept=".json,application/json">
           </label>
         </div>
@@ -192,20 +236,25 @@
         <h2>Quiz kanji</h2>
         <p class="muted">Wybierz poprawne znaczenie znaku.</p>
         <div id="quizContent"></div>
-        <button id="startQuiz" class="button" type="button">Następne pytanie</button>
+        <button id="startQuiz" class="button" type="button">
+          Następne pytanie
+        </button>
       </section>
     </section>
 
     <section id="settings" class="view hidden">
       <section class="panel">
         <h2>Ustawienia</h2>
-        <label class="language-setting">Język tłumaczeń
+
+        <label class="language-setting">
+          Język tłumaczeń
           <select id="language">
             <option value="pl">Polski</option>
             <option value="en">English</option>
             <option value="both">Polski i angielski</option>
           </select>
         </label>
+
         <p class="notice">
           Jeśli polskie tłumaczenie jest puste, przy ustawieniu polskiego
           wyświetli się angielskie. JLPT jest oznaczeniem przybliżonym.

@@ -1,9 +1,14 @@
 {
   "version": 1,
-  "source": "Moja baza Kanji Path",
   "kanji": [
     {
       "character": "日",
+      "characterFurigana": [
+        {
+          "text": "日",
+          "reading": "ひ"
+        }
+      ],
       "grade": 1,
       "schoolStage": "小学校",
       "jlpt": "N5",
@@ -13,38 +18,171 @@
         "en": "sun; day"
       },
       "onyomi": ["ニチ", "ジツ"],
-      "kunyomi": ["ひ", "-び", "-か"],
+      "kunyomi": ["ひ", "か"],
       "examples": [
         {
-          "word": "日本",
-          "reading": "にほん",
-          "wordMeaning": {
-            "pl": "Japonia",
-            "en": "Japan"
-          },
-          "sentence": "日本に住んでいます。",
-          "sentenceMeaning": {
-            "pl": "Mieszkam w Japonii.",
-            "en": "I live in Japan."
-          }
-        },
-        {
           "word": "日曜日",
-          "reading": "にちようび",
+          "wordFurigana": [
+            {
+              "text": "日",
+              "reading": "にち"
+            },
+            {
+              "text": "曜",
+              "reading": "よう"
+            },
+            {
+              "text": "日",
+              "reading": "び"
+            }
+          ],
           "wordMeaning": {
             "pl": "niedziela",
             "en": "Sunday"
           },
-          "sentence": "日曜日に友達と会います。",
+          "sentence": "私は日本に住んでいます。",
+          "sentenceFurigana": [
+            {
+              "text": "私",
+              "reading": "わたし"
+            },
+            {
+              "text": "は",
+              "reading": ""
+            },
+            {
+              "text": "日",
+              "reading": "に"
+            },
+            {
+              "text": "本",
+              "reading": "ほん"
+            },
+            {
+              "text": "に",
+              "reading": ""
+            },
+            {
+              "text": "住",
+              "reading": "す"
+            },
+            {
+              "text": "ん",
+              "reading": ""
+            },
+            {
+              "text": "で",
+              "reading": ""
+            },
+            {
+              "text": "い",
+              "reading": ""
+            },
+            {
+              "text": "ま",
+              "reading": ""
+            },
+            {
+              "text": "す",
+              "reading": ""
+            },
+            {
+              "text": "。",
+              "reading": ""
+            }
+          ],
           "sentenceMeaning": {
-            "pl": "W niedzielę spotykam się z przyjaciółmi.",
-            "en": "I will meet my friends on Sunday."
+            "pl": "Mieszkam w Japonii.",
+            "en": "I live in Japan."
+          }
+        }
+      ]
+    },
+    {
+      "character": "本",
+      "characterFurigana": [
+        {
+          "text": "本",
+          "reading": "ほん"
+        }
+      ],
+      "grade": 1,
+      "schoolStage": "小学校",
+      "jlpt": "N5",
+      "strokes": 5,
+      "meanings": {
+        "pl": "książka; podstawa",
+        "en": "book; origin"
+      },
+      "onyomi": ["ホン"],
+      "kunyomi": ["もと"],
+      "examples": [
+        {
+          "word": "日本語",
+          "wordFurigana": [
+            {
+              "text": "日",
+              "reading": "に"
+            },
+            {
+              "text": "本",
+              "reading": "ほん"
+            },
+            {
+              "text": "語",
+              "reading": "ご"
+            }
+          ],
+          "wordMeaning": {
+            "pl": "język japoński",
+            "en": "Japanese language"
+          },
+          "sentence": "本を読みます。",
+          "sentenceFurigana": [
+            {
+              "text": "本",
+              "reading": "ほん"
+            },
+            {
+              "text": "を",
+              "reading": ""
+            },
+            {
+              "text": "読",
+              "reading": "よ"
+            },
+            {
+              "text": "み",
+              "reading": ""
+            },
+            {
+              "text": "ま",
+              "reading": ""
+            },
+            {
+              "text": "す",
+              "reading": ""
+            },
+            {
+              "text": "。",
+              "reading": ""
+            }
+          ],
+          "sentenceMeaning": {
+            "pl": "Czytam książkę.",
+            "en": "I read a book."
           }
         }
       ]
     },
     {
       "character": "学",
+      "characterFurigana": [
+        {
+          "text": "学",
+          "reading": "がく"
+        }
+      ],
       "grade": 1,
       "schoolStage": "小学校",
       "jlpt": "N5",
@@ -54,47 +192,82 @@
         "en": "study; learning"
       },
       "onyomi": ["ガク"],
-      "kunyomi": ["まな.ぶ"],
+      "kunyomi": ["まなぶ"],
       "examples": [
         {
           "word": "学校",
-          "reading": "がっこう",
+          "wordFurigana": [
+            {
+              "text": "学",
+              "reading": "がっ"
+            },
+            {
+              "text": "校",
+              "reading": "こう"
+            }
+          ],
           "wordMeaning": {
             "pl": "szkoła",
             "en": "school"
           },
-          "sentence": "毎日学校へ行きます。",
+          "sentence": "学校で日本語を勉強します。",
+          "sentenceFurigana": [
+            {
+              "text": "学",
+              "reading": "がっ"
+            },
+            {
+              "text": "校",
+              "reading": "こう"
+            },
+            {
+              "text": "で",
+              "reading": ""
+            },
+            {
+              "text": "日",
+              "reading": "に"
+            },
+            {
+              "text": "本",
+              "reading": "ほん"
+            },
+            {
+              "text": "語",
+              "reading": "ご"
+            },
+            {
+              "text": "を",
+              "reading": ""
+            },
+            {
+              "text": "勉",
+              "reading": "べん"
+            },
+            {
+              "text": "強",
+              "reading": "きょう"
+            },
+            {
+              "text": "し",
+              "reading": ""
+            },
+            {
+              "text": "ま",
+              "reading": ""
+            },
+            {
+              "text": "す",
+              "reading": ""
+            },
+            {
+              "text": "。",
+              "reading": ""
+            }
+          ],
           "sentenceMeaning": {
-            "pl": "Codziennie chodzę do szkoły.",
-            "en": "I go to school every day."
-          }
-        }
-      ]
-    },
-    {
-      "character": "誰",
-      "grade": null,
-      "schoolStage": "中学校",
-      "jlpt": "N5",
-      "strokes": 15,
-      "meanings": {
-        "pl": "",
-        "en": "who"
-      },
-      "onyomi": ["スイ"],
-      "kunyomi": ["だれ"],
-      "examples": [
-        {
-          "word": "誰か",
-          "reading": "だれか",
-          "wordMeaning": {
-            "pl": "ktoś",
-            "en": "someone"
-          },
-          "sentence": "誰かいますか。",
-          "sentenceMeaning": {
-            "pl": "Czy ktoś tam jest?",
-            "en": "Is anyone there?"
+            "pl": "Uczę się japońskiego w szkole.",
+            "en": "I study Japanese at school."
           }
         }
       ]

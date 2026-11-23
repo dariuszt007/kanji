@@ -90,7 +90,7 @@
       <section class="panel">
         <h2 id="formTitle">Dodaj kanji</h2>
         <p class="muted">
-          Zmiany zapisują się lokalnie w tej przeglądarce. Pobierz JSON i wgraj
+          Zmiany są zapisywane lokalnie w tej przeglądarce. Pobierz JSON i wgraj
           go do repozytorium, aby zapisać je na GitHubie.
         </p>
 
@@ -142,8 +142,7 @@
           <section class="furigana-section">
             <h3>Furigana kanji</h3>
             <p class="muted">
-              Każdy znak kanji ma własne pole. Furigana nie jest przypisywana
-              do całego słowa ani zdania.
+              Wpisz odczyt osobno przy każdym kanji. Kana nie dostaje furigany.
             </p>
             <div id="characterFuriganaEditor" class="furigana-editor"></div>
           </section>
@@ -182,7 +181,7 @@
         <p id="dataMessage" class="status" aria-live="polite"></p>
 
         <p class="notice">
-          „Scal” aktualizuje kanji o tym samym znaku i dodaje nowe.
+          „Scal” aktualizuje rekordy o tym samym kanji i dodaje nowe.
           „Zastąp” wczytuje wybrany plik jako całą bazę.
         </p>
       </section>
@@ -210,16 +209,15 @@
         <p class="notice">
           Jeśli polskie tłumaczenie jest puste, przy ustawieniu polskiego
           wyświetli się angielskie. JLPT jest oznaczeniem przybliżonym.
-          Oficjalne klasy 1–6 dotyczą kanji szkoły podstawowej.
         </p>
       </section>
     </section>
   </main>
 
   <footer>
-    Kanji używają fontu Klee One, jeśli jest dostępny, z fontami systemowymi
-    jako zamiennikami. Rozpoznawanie mowy zależy od przeglądarki i uprawnień
-    mikrofonu.
+    Kanji używają Klee One, jeśli font jest dostępny; w przeciwnym razie
+    przeglądarka użyje fontu systemowego. Rozpoznawanie mowy zależy od
+    przeglądarki i uprawnień mikrofonu.
   </footer>
 </body>
 </html>

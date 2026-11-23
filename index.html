@@ -3,75 +3,351 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kanji Path</title>
+<meta name="theme-color" content="#282e34">
+<title>Kanji Path — nauka kanji</title>
+
 <style>
-:root{
-  --bg:#f5f3ee;--paper:#fff;--ink:#252b32;--muted:#68717a;
-  --accent:#b34838;--line:#e5e0d8;--soft:#f1ebe5;--green:#396b57;
+:root {
+  --bg: #f5f3ee;
+  --paper: #fff;
+  --ink: #252b32;
+  --muted: #68717a;
+  --accent: #b34838;
+  --line: #e5e0d8;
+  --soft: #f1ebe5;
+  --green: #396b57;
+  --font-latin: -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Helvetica Neue", Arial, sans-serif;
+  --font-ja: "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-header{background:#282e34;color:#fff;padding:20px max(18px,calc((100vw - 1120px)/2));display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
-header h1{font-size:23px;margin:0}
-header p{margin:3px 0 0;color:#d6dce0;font-size:13px}
-main{max-width:1120px;margin:22px auto;padding:0 16px}
-nav,.row,.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-nav{margin-bottom:18px}
-button,input,select,textarea{font:inherit}
-button{border:0;border-radius:10px;background:var(--accent);color:#fff;padding:10px 14px;cursor:pointer;font-weight:650}
-button:hover{filter:brightness(.95)}
-button:disabled{opacity:.55;cursor:not-allowed}
-button.secondary{background:#e9e4dc;color:var(--ink)}
-button.active{background:var(--green);color:#fff}
-input,select,textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px;background:#fff;color:var(--ink)}
-label{display:grid;gap:5px;color:var(--muted);font-size:13px}
-.panel{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
-.filters{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:end}
-.columns{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:16px}
-#cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:9px}
-.tile{min-height:104px;display:flex;flex-direction:column;justify-content:center;text-align:center;background:white;color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px}
-.tile:hover,.tile.selected{border-color:var(--accent);box-shadow:0 0 0 2px #b3483822}
-.glyph,.bigkanji,.daily-kanji{font-family:"Yu Gothic","Meiryo","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif}
-.glyph{display:block;min-height:50px;font-size:40px;line-height:1.25;color:#20262c}
-.tile small{display:block;margin-top:5px;color:var(--muted);overflow-wrap:anywhere}
-.bigkanji{font-size:84px;line-height:1}
-.hero{display:flex;gap:20px;align-items:center}
-h2,h3{margin:0 0 10px}
-h2{font-size:21px}h3{font-size:16px}
-.muted{color:var(--muted)}
-.tag{display:inline-block;background:var(--soft);border-radius:20px;padding:3px 9px;margin:2px;font-size:12px}
-.example{border-top:1px solid var(--line);padding:12px 0}
-.example-ja{font-size:20px;margin-top:7px}
-ruby{ruby-position:over}rt{font-size:.55em;color:var(--muted)}
-.daily{border-left:5px solid var(--accent);background:linear-gradient(120deg,#fff 65%,#f7eee8)}
-.daily-content{display:flex;align-items:center;gap:18px}
-.daily-kanji{font-size:62px;line-height:1}
-.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-.example-editor{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;background:#fcfbf9}
-.example-editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.hidden{display:none!important}
-.status{font-size:13px;color:var(--muted)}
-.notice{background:#fff6df;border:1px solid #f0dda9;padding:12px;border-radius:10px;font-size:13px}
-footer{max-width:1120px;margin:26px auto;padding:0 16px 30px;color:var(--muted);font-size:12px}
-@media(max-width:760px){.filters{grid-template-columns:1fr 1fr}.filters label:first-child{grid-column:span 2}.columns{grid-template-columns:1fr}.hero{align-items:flex-start}.bigkanji{font-size:70px}}
-@media(max-width:560px){.daily-content{align-items:flex-start}.example-editor-grid{grid-template-columns:1fr}}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.5 var(--font-latin);
+}
+
+header {
+  background: #282e34;
+  color: #fff;
+  padding: 20px max(16px, calc((100vw - 1120px) / 2));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+header h1 { margin: 0; font-size: 23px; }
+header p { margin: 3px 0 0; color: #d6dce0; font-size: 13px; }
+
+main {
+  max-width: 1120px;
+  margin: 22px auto;
+  padding: 0 16px;
+}
+
+nav, .row, .actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+nav { margin-bottom: 18px; }
+
+button, input, select, textarea { font: inherit; }
+
+button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 650;
+  touch-action: manipulation;
+}
+
+button:hover { filter: brightness(.95); }
+button:disabled { opacity: .55; cursor: not-allowed; }
+button.secondary { background: #e9e4dc; color: var(--ink); }
+button.active { background: var(--green); color: #fff; }
+
+input, select, textarea {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 10px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+textarea { min-height: 76px; resize: vertical; }
+
+label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.panel {
+  min-width: 0;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr);
+  gap: 16px;
+}
+
+#cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
+  gap: 9px;
+}
+
+.tile {
+  min-height: 104px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 9px 6px;
+}
+
+.tile:hover, .tile.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px #b3483822;
+}
+
+.glyph, .bigkanji, .daily-kanji, .example-ja, ruby {
+  font-family: var(--font-ja);
+}
+
+.glyph {
+  display: block;
+  min-height: 50px;
+  color: #20262c;
+  font-size: 40px;
+  line-height: 1.25;
+}
+
+.tile small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.bigkanji { font-size: 84px; line-height: 1; }
+.hero { display: flex; align-items: center; gap: 20px; }
+
+h2, h3 { margin: 0 0 10px; }
+h2 { font-size: 21px; }
+h3 { font-size: 16px; }
+.muted, .status { color: var(--muted); }
+.status { font-size: 13px; }
+
+.tag {
+  display: inline-block;
+  background: var(--soft);
+  border-radius: 20px;
+  padding: 3px 9px;
+  margin: 2px;
+  font-size: 12px;
+}
+
+.example {
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+}
+
+.example-ja { font-size: 20px; margin-top: 7px; }
+ruby { ruby-position: over; }
+rt { font-size: .55em; color: var(--muted); }
+
+.actions { margin-top: 12px; }
+
+.daily {
+  border-left: 5px solid var(--accent);
+  background: linear-gradient(120deg, #fff 65%, #f7eee8);
+}
+
+.daily-content { display: flex; align-items: center; gap: 18px; }
+.daily-kanji { font-size: 62px; line-height: 1; }
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.example-editor {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  margin: 10px 0;
+  background: #fcfbf9;
+}
+
+.example-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.notice {
+  background: #fff6df;
+  border: 1px solid #f0dda9;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.hidden { display: none !important; }
+
+footer {
+  max-width: 1120px;
+  margin: 26px auto;
+  padding: 0 16px 30px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+a { color: var(--accent); }
+
+@media (max-width: 760px) {
+  .filters { grid-template-columns: 1fr 1fr; }
+  .filters label:first-child { grid-column: 1 / -1; }
+  .columns { grid-template-columns: 1fr; }
+  .hero { align-items: flex-start; }
+  .bigkanji { font-size: 70px; }
+}
+
+@media (max-width: 700px) {
+  body { font-size: 15px; line-height: 1.55; }
+
+  header { padding: 14px 16px; }
+  header h1 { font-size: 20px; }
+
+  header > .row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  #status { grid-column: 1 / -1; }
+  header button { width: 100%; padding: 9px 8px; font-size: 14px; }
+
+  main { margin: 14px auto 40px; padding: 0 12px; }
+
+  nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 7px;
+    padding: 2px 1px 8px;
+    margin: 0 -2px 12px;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  nav button {
+    flex: 0 0 auto;
+    min-height: 42px;
+    padding: 9px 12px;
+    white-space: nowrap;
+    font-size: 14px;
+  }
+
+  .panel { padding: 14px; margin-bottom: 12px; border-radius: 14px; }
+
+  .columns { display: flex; flex-direction: column; gap: 0; }
+
+  #cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .tile { min-height: 96px; padding: 8px 5px; }
+  .glyph { min-height: 48px; font-size: clamp(32px, 10vw, 42px); }
+  .tile small { font-size: 11px; }
+
+  .hero { gap: 14px; }
+  .bigkanji { flex: 0 0 auto; font-size: 68px; }
+  .daily-content { gap: 14px; }
+  .daily-kanji { flex: 0 0 auto; font-size: 54px; }
+
+  .actions { gap: 7px; }
+  .actions button { flex: 1 1 auto; }
+
+  .settings-grid, .example-editor-grid { grid-template-columns: 1fr; }
+  footer { padding: 0 12px 20px; }
+}
+
+@media (max-width: 380px) {
+  #cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filters { grid-template-columns: 1fr; }
+  .filters label:first-child { grid-column: auto; }
+  .hero { flex-direction: column; }
+  .daily-content { align-items: flex-start; }
+  .daily-kanji { font-size: 48px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
 </style>
 </head>
+
 <body>
 <header>
-  <div><h1>Kanji Path</h1><p>Kanji i japońskie słownictwo — ucz się we własnym tempie</p></div>
+  <div>
+    <h1>Kanji Path</h1>
+    <p>Kanji i japońskie słownictwo — ucz się we własnym tempie</p>
+  </div>
   <div class="row">
-    <span id="status" class="status" style="color:#e3e8eb">Wczytuję JSON…</span>
-    <button id="refresh" class="secondary">Odśwież z JSON</button>
-    <button id="copyJson">Kopiuj JSON</button>
+    <span id="status" class="status" style="color:#e3e8eb">Wczytuję data.json…</span>
+    <button id="refresh" class="secondary" type="button">Odśwież z JSON</button>
+    <button id="copyJson" type="button">Kopiuj JSON</button>
   </div>
 </header>
 
 <main>
   <nav>
-    <button class="tab active" data-tab="learn">Nauka</button>
-    <button class="tab secondary" data-tab="manage">Edytuj / dodaj kanji</button>
-    <button class="tab secondary" data-tab="settings">Ustawienia</button>
+    <button class="tab active" data-tab="learn" type="button">Nauka</button>
+    <button class="tab secondary" data-tab="manage" type="button">Edytuj / dodaj</button>
+    <button class="tab secondary" data-tab="settings" type="button">Ustawienia</button>
   </nav>
 
   <section id="learn" class="view">
@@ -89,25 +365,26 @@ footer{max-width:1120px;margin:26px auto;padding:0 16px 30px;color:var(--muted);
       <label>Poziom JLPT
         <select id="level">
           <option value="all">Wszystkie</option>
-          <option>N5</option><option>N4</option><option>N3</option><option>N2</option><option>N1</option>
+          <option>N5</option><option>N4</option><option>N3</option>
+          <option>N2</option><option>N1</option>
         </select>
       </label>
-      <label>Klasa japońska
+      <label>Klasa podstawowa
         <select id="grade">
           <option value="all">Wszystkie</option>
           <option value="1">Klasa 1</option><option value="2">Klasa 2</option>
           <option value="3">Klasa 3</option><option value="4">Klasa 4</option>
           <option value="5">Klasa 5</option><option value="6">Klasa 6</option>
-          <option value="8">Szkoła średnia</option>
         </select>
       </label>
-      <button id="clear" class="secondary">Wyczyść</button>
+      <button id="clear" class="secondary" type="button">Wyczyść</button>
     </div>
 
     <div class="columns">
       <div class="panel">
         <div class="row" style="justify-content:space-between">
-          <h2>Lista kanji</h2><span id="count" class="muted"></span>
+          <h2>Lista kanji</h2>
+          <span id="count" class="muted"></span>
         </div>
         <div id="cards"></div>
         <p id="listHint" class="muted"></p>
@@ -121,22 +398,38 @@ footer{max-width:1120px;margin:26px auto;padding:0 16px 30px;color:var(--muted);
   <section id="manage" class="view hidden">
     <div class="panel">
       <h2 id="formTitle">Dodaj kanji</h2>
-      <p class="muted">Wpisy są edytowane w pamięci strony. Kliknij „Kopiuj JSON”, a następnie wklej wynik do `data.json` w repozytorium.</p>
+      <p class="muted">
+        Edycje zapisują się jako lokalny szkic w tej przeglądarce.
+        Pobierz JSON i wgraj go do repozytorium, aby zapisać zmiany na GitHubie.
+      </p>
 
       <form id="kanjiForm">
         <input type="hidden" id="originalCharacter">
+
         <div class="settings-grid">
           <label>Kanji *
             <input id="character" required maxlength="2" placeholder="日">
           </label>
-          <label>Klasa szkolna
-            <input id="gradeInput" type="number" min="1" max="9">
+          <label>Klasa podstawowa (1–6)
+            <input id="gradeInput" type="number" min="1" max="6">
           </label>
-          <label>JLPT (poziom przybliżony)
+          <label>Etap szkoły
+            <select id="stageInput">
+              <option value="">Nieokreślony</option>
+              <option value="小学校">Szkoła podstawowa</option>
+              <option value="中学校">Junior high — klasa nieokreślona</option>
+              <option value="高等学校">High school</option>
+            </select>
+          </label>
+          <label>JLPT — poziom przybliżony
             <select id="jlptInput">
               <option value="">Nieprzypisany</option>
-              <option>N5</option><option>N4</option><option>N3</option><option>N2</option><option>N1</option>
+              <option>N5</option><option>N4</option><option>N3</option>
+              <option>N2</option><option>N1</option>
             </select>
+          </label>
+          <label>Liczba kresek
+            <input id="strokesInput" type="number" min="1">
           </label>
           <label>Znaczenie po polsku
             <input id="meaningPL" placeholder="np. słońce; dzień">
@@ -144,27 +437,48 @@ footer{max-width:1120px;margin:26px auto;padding:0 16px 30px;color:var(--muted);
           <label>Znaczenie po angielsku
             <input id="meaningEN" placeholder="e.g. sun; day">
           </label>
-          <label>On’yomi — rozdziel przecinkami
+          <label>On’yomi — oddziel przecinkami
             <input id="onyomiInput" placeholder="ニチ, ジツ">
           </label>
-          <label>Kun’yomi — rozdziel przecinkami
+          <label>Kun’yomi — oddziel przecinkami
             <input id="kunyomiInput" placeholder="ひ, か">
           </label>
         </div>
 
-        <h3 style="margin-top:18px">Przykładowe słowa i zdania</h3>
+        <label style="margin-top:12px">Pozostałe pola rekordu w JSON
+          <textarea id="extraFields" spellcheck="false"
+            placeholder='{"radical":"日","notes":"własna notatka"}'></textarea>
+        </label>
+        <p class="muted">Wpisz tutaj poprawny obiekt JSON. Przy edycji dodatkowe pola są zachowywane.</p>
+
+        <h3 style="margin-top:18px">Słowa i zdania</h3>
         <div id="examples"></div>
         <button type="button" id="addExample" class="secondary">+ Dodaj słowo / zdanie</button>
 
         <div class="actions">
           <button type="submit">Zapisz kanji</button>
           <button type="button" id="newEntry" class="secondary">Nowy wpis</button>
+          <button type="button" id="exportFile" class="secondary">Pobierz pełny JSON</button>
         </div>
       </form>
 
-      <div class="notice" style="margin-top:16px">
-        Przycisk „Odśwież z JSON” ponownie pobiera wyłącznie `data.json` i odrzuca niezapisane zmiany w stronie.
-        GitHub Pages nie zapisuje pliku w repozytorium automatycznie.
+      <div class="settings-grid" style="margin-top:12px">
+        <label>Tryb importu
+          <select id="importMode">
+            <option value="merge">Scal z obecną bazą</option>
+            <option value="replace">Zastąp całą bazę</option>
+          </select>
+        </label>
+        <label>Importuj plik JSON
+          <input id="importFile" type="file" accept=".json,application/json">
+        </label>
+      </div>
+      <p id="dataMessage" class="status" aria-live="polite"></p>
+
+      <div class="notice">
+        „Scal” aktualizuje znaki o tym samym kanji i dodaje nowe. „Zastąp”
+        wczytuje wybrany plik jako całą bazę. Odświeżenie z serwera może
+        zastąpić lokalny szkic.
       </div>
     </div>
   </section>
@@ -173,7 +487,7 @@ footer{max-width:1120px;margin:26px auto;padding:0 16px 30px;color:var(--muted);
     <div class="panel">
       <h2>Ustawienia</h2>
       <div class="settings-grid">
-        <label>Język tłumaczenia
+        <label>Język tłumaczeń
           <select id="language">
             <option value="pl">Polski</option>
             <option value="en">English</option>
@@ -181,19 +495,21 @@ footer{max-width:1120px;margin:26px auto;padding:0 16px 30px;color:var(--muted);
           </select>
         </label>
       </div>
-      <p class="notice">
-        Gdy wybierzesz polski, a rekord nie ma polskiego tłumaczenia, wyświetli się angielskie.
-        Dopisane przez Ciebie polskie znaczenie jest zapisywane w danych JSON.
-        JLPT jest oznaczeniem przybliżonym, nie oficjalnym wykazem egzaminatora.
+
+      <p class="notice" style="margin-top:14px">
+        Gdy wybierzesz polski, a polskie tłumaczenie jest puste, strona pokaże
+        angielskie. JLPT jest przybliżony. Oficjalne klasy 1–6 dotyczą listy
+        kanji szkoły podstawowej; dla junior high nie ma przydziału każdego
+        kanji do konkretnej klasy.
       </p>
     </div>
   </section>
 </main>
 
 <footer>
-  Czcionki korzystają z fontów systemowych: japońskie znaki z Yu Gothic, Meiryo, Hiragino lub Noto Sans JP,
-  a tekst polski i angielski z domyślnego fontu systemu. Jeśli danej czcionki nie ma na urządzeniu,
-  przeglądarka użyje kolejnej dostępnej.
+  Font japoński: Hiragino, Yu Gothic, Meiryo lub Noto Sans JP — zależnie od urządzenia.
+  Tekst polski i angielski używa fontu systemowego. Jeśli data.json nie ładuje się,
+  uruchom stronę przez lokalny serwer HTTP, a nie przez otwieranie pliku bezpośrednio.
 </footer>
 
 <script>
@@ -203,134 +519,222 @@ footer{max-width:1120px;margin:26px auto;padding:0 16px 30px;color:var(--muted);
 const DATA_URL = "./data.json";
 const SETTINGS_KEY = "kanjipath.settings.v3";
 const DAILY_KEY = "kanjipath.daily.v3";
+const DRAFT_KEY = "kanjipath.local-draft.v1";
 
-const $ = s => document.querySelector(s);
+const $ = selector => document.querySelector(selector);
 const 
-$$ = s => [...document.querySelectorAll(s)];
+$$ = selector => [...document.querySelectorAll(selector)];
 
 let records = [];
 let selectedCharacter = "";
 let settings = readStorage(SETTINGS_KEY, { language: "pl" });
-let dailyDone = readStorage(DAILY_KEY, {});
 
 function readStorage(key, fallback) {
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
-  catch { return fallback; }
+  try {
+    return JSON.parse(localStorage.getItem(key)) ?? fallback;
+  } catch {
+    return fallback;
+  }
 }
+
 function store(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
+
 function escapeHTML(value = "") {
-  return String(value).replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  })[c]);
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
 }
+
 function normalizeRecord(item) {
+  const rawMeanings = item.meanings || {};
+  const englishMeanings = Array.isArray(rawMeanings)
+    ? rawMeanings.join("; ")
+    : (rawMeanings.en || "");
+
+  const rawExamples = Array.isArray(item.examples)
+    ? item.examples
+    : (Array.isArray(item.words)
+        ? item.words.map(word => typeof word === "string" ? { word } : word)
+        : []);
+
   return {
+    ...item,
     character: String(item.character || "").trim(),
-    grade: item.grade || "",
-    jlpt: item.jlpt || "",
+    grade: item.grade ?? "",
+    schoolStage: item.schoolStage || "",
+    jlpt: item.jlpt || item.level || "",
+    strokes: item.strokes ?? "",
     meanings: {
-      pl: item.meanings?.pl || "",
-      en: item.meanings?.en || ""
+      ...(Array.isArray(rawMeanings) ? {} : rawMeanings),
+      pl: Array.isArray(rawMeanings) ? "" : (rawMeanings.pl || ""),
+      en: englishMeanings
     },
     onyomi: Array.isArray(item.onyomi) ? item.onyomi : [],
     kunyomi: Array.isArray(item.kunyomi) ? item.kunyomi : [],
-    strokes: item.strokes || "",
-    examples: Array.isArray(item.examples) ? item.examples.map(example => ({
-      word: example.word || "",
-      reading: example.reading || "",
-      wordMeaning: {
-        pl: example.wordMeaning?.pl || "",
-        en: example.wordMeaning?.en || ""
-      },
-      sentence: example.sentence || "",
-      sentenceMeaning: {
-        pl: example.sentenceMeaning?.pl || "",
-        en: example.sentenceMeaning?.en || ""
-      }
-    })) : []
+    examples: rawExamples.map(example => {
+      const wordMeaning = example.wordMeaning || {};
+      const sentenceMeaning = example.sentenceMeaning || {};
+      const oldMeanings = Array.isArray(example.meanings)
+        ? example.meanings.join("; ")
+        : "";
+
+      return {
+        ...example,
+        word: example.word || "",
+        reading: example.reading || "",
+        wordMeaning: {
+          ...wordMeaning,
+          pl: wordMeaning.pl || "",
+          en: wordMeaning.en || oldMeanings
+        },
+        sentence: example.sentence || example.ja || "",
+        sentenceMeaning: {
+          ...sentenceMeaning,
+          pl: sentenceMeaning.pl || "",
+          en: sentenceMeaning.en || example.en || ""
+        }
+      };
+    })
   };
 }
-function showTranslation(pl, en) {
-  pl = String(pl || "").trim();
-  en = String(en || "").trim();
+
+function saveLocalDraft() {
+  store(DRAFT_KEY, {
+    version: 1,
+    kanji: records
+  });
+}
+
+async function loadJSON() {
+  $("#status").textContent = "Wczytuję data.json…";
+
+  try {
+    const response = await fetch(`${DATA_URL}?refresh=${Date.now()}`, {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data || !Array.isArray(data.kanji)) {
+      throw new Error("JSON musi zawierać tablicę kanji.");
+    }
+
+    const serverRecords = data.kanji
+      .map(normalizeRecord)
+      .filter(item => item.character);
+
+    const localDraft = readStorage(DRAFT_KEY, null);
+
+    records = Array.isArray(localDraft?.kanji)
+      ? localDraft.kanji.map(normalizeRecord).filter(item => item.character)
+      : serverRecords;
+
+    selectedCharacter = "";
+    $("#status").textContent =
+      `Wczytano ${records.length.toLocaleString("pl-PL")} kanji`;
+
+    renderAll();
+  } catch (error) {
+    $("#status").textContent = "Nie udało się wczytać data.json";
+    $("#detail").innerHTML = `
+      <p>Nie udało się wczytać <code>data.json</code>.</p>
+      <p class="muted">${escapeHTML(error.message)}</p>
+      <p>Sprawdź, czy plik znajduje się obok index.html i czy jest poprawnym JSON-em.</p>
+    `;
+  }
+}
+
+function displayTranslation(polish, english) {
+  const pl = String(polish || "").trim();
+  const en = String(english || "").trim();
 
   if (settings.language === "en") {
     return escapeHTML(en || pl || "Translation unavailable");
   }
+
   if (settings.language === "both") {
-    if (pl && en) return `${escapeHTML(pl)} <span class="muted">/</span> ${escapeHTML(en)}`;
+    if (pl && en) {
+      return `${escapeHTML(pl)} <span class="muted">/</span> ${escapeHTML(en)}`;
+    }
     return escapeHTML(pl || en || "Brak tłumaczenia / Translation unavailable");
   }
-  // Polski: zgodnie z prośbą użyj angielskiego jako zamiennika,
-  // jeśli polskiego tłumaczenia jeszcze nie wpisano.
+
   return escapeHTML(pl || en || "Brak tłumaczenia");
 }
-function localDateKey() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-}
-function filteredRecords() {
+
+function getFilteredRecords() {
   const query = $("#search").value.trim().toLowerCase();
-  const level = $("#level").value;
-  const grade = $("#grade").value;
+  const selectedLevel = $("#level").value;
+  const selectedGrade = $("#grade").value;
 
   return records.filter(item => {
-    if (level !== "all" && item.jlpt !== level) return false;
-    if (grade !== "all" && String(item.grade) !== grade) return false;
-    const text = [
-      item.character, item.meanings.pl, item.meanings.en,
-      ...item.onyomi, ...item.kunyomi,
-      ...item.examples.flatMap(e => [
-        e.word, e.reading, e.wordMeaning.pl, e.wordMeaning.en,
-        e.sentence, e.sentenceMeaning.pl, e.sentenceMeaning.en
-      ])
+    if (selectedLevel !== "all" && item.jlpt !== selectedLevel) {
+      return false;
+    }
+
+    if (selectedGrade !== "all" && String(item.grade) !== selectedGrade) {
+      return false;
+    }
+
+    const exampleText = item.examples.flatMap(example => [
+      example.word,
+      example.reading,
+      example.wordMeaning?.pl,
+      example.wordMeaning?.en,
+      example.sentence,
+      example.sentenceMeaning?.pl,
+      example.sentenceMeaning?.en
+    ]);
+
+    const searchable = [
+      item.character,
+      item.meanings?.pl,
+      item.meanings?.en,
+      item.schoolStage,
+      ...(item.onyomi || []),
+      ...(item.kunyomi || []),
+      ...exampleText
     ].join(" ").toLowerCase();
-    return !query || text.includes(query);
-  }).sort((a,b) => a.character.localeCompare(b.character));
-}
-async function loadJSON() {
-  $("#status").textContent = "Wczytuję data.json…";
-  try {
-    const response = await fetch(`${DATA_URL}?refresh=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    if (!data || !Array.isArray(data.kanji)) throw new Error("JSON musi zawierać tablicę kanji");
 
-    records = data.kanji
-      .map(normalizeRecord)
-      .filter(item => item.character);
-
-    selectedCharacter = "";
-    $("#status").textContent = `Wczytano ${records.length.toLocaleString("pl-PL")} kanji z data.json`;
-    renderAll();
-  } catch (error) {
-    $("#status").textContent = "Błąd wczytywania data.json";
-    $("#detail").innerHTML = `
-      <p>Nie udało się wczytać <code>data.json</code>.</p>
-      <p class="muted">${escapeHTML(error.message)}</p>
-      <p>Sprawdź, czy plik istnieje w tym samym katalogu co index.html i jest poprawnym JSON-em.</p>`;
-  }
+    return !query || searchable.includes(query);
+  }).sort((a, b) => a.character.localeCompare(b.character));
 }
+
 function renderAll() {
   renderList();
   renderDaily();
-  if (selectedCharacter) renderDetail(selectedCharacter);
+
+  if (selectedCharacter) {
+    renderDetail(selectedCharacter);
+  }
 }
+
 function renderList() {
-  const all = filteredRecords();
-  const visible = all.slice(0, 250);
+  const all = getFilteredRecords();
+  const visible = all.slice(0, 300);
+
   $("#count").textContent = `${all.length.toLocaleString("pl-PL")} wyników`;
+
   $("#listHint").textContent = all.length > visible.length
-    ? `Wyświetlam pierwsze ${visible.length}. Wpisz znak lub zawęź filtry.`
+    ? `Wyświetlam pierwsze ${visible.length}. Zawęź wyszukiwanie lub filtry.`
     : "";
 
   $("#cards").innerHTML = visible.map(item => `
-    <button type="button" class="tile ${item.character === selectedCharacter ? "selected" : ""}"
+    <button type="button"
+      class="tile ${item.character === selectedCharacter ? "selected" : ""}"
       data-character="${escapeHTML(item.character)}">
       <span class="glyph">${escapeHTML(item.character)}</span>
-      <small>${showTranslation(item.meanings.pl, item.meanings.en)}</small>
+      <small>${displayTranslation(item.meanings?.pl, item.meanings?.en)}</small>
     </button>
   `).join("");
 
@@ -342,89 +746,141 @@ function renderList() {
     });
   });
 }
+
 function renderDetail(character) {
-  const item = records.find(x => x.character === character);
+  const item = records.find(record => record.character === character);
   if (!item) return;
 
   const examplesHTML = item.examples.length
     ? item.examples.map(example => `
       <div class="example">
         <h3>${escapeHTML(example.word || "Przykład")}</h3>
-        ${example.reading ? `<div class="muted">${escapeHTML(example.reading)}</div>` : ""}
-        ${(example.wordMeaning.pl || example.wordMeaning.en)
-          ? `<div>${showTranslation(example.wordMeaning.pl, example.wordMeaning.en)}</div>` : ""}
-        ${example.sentence ? `<div class="example-ja">${escapeHTML(example.sentence)}</div>` : ""}
-        ${(example.sentenceMeaning.pl || example.sentenceMeaning.en)
-          ? `<div>${showTranslation(example.sentenceMeaning.pl, example.sentenceMeaning.en)}</div>` : ""}
+        ${example.reading
+          ? `<div class="muted">${escapeHTML(example.reading)}</div>`
+          : ""}
+        ${(example.wordMeaning?.pl || example.wordMeaning?.en)
+          ? `<div>${displayTranslation(
+              example.wordMeaning?.pl,
+              example.wordMeaning?.en
+            )}</div>`
+          : ""}
+        ${example.sentence
+          ? `<div class="example-ja">${escapeHTML(example.sentence)}</div>`
+          : ""}
+        ${(example.sentenceMeaning?.pl || example.sentenceMeaning?.en)
+          ? `<div>${displayTranslation(
+              example.sentenceMeaning?.pl,
+              example.sentenceMeaning?.en
+            )}</div>`
+          : ""}
       </div>
     `).join("")
-    : `<p class="muted">Brak przykładów. Edytuj kanji i dodaj dowolną liczbę słów oraz zdań.</p>`;
+    : `<p class="muted">Nie dodano jeszcze przykładów do tego kanji.</p>`;
 
   $("#detail").innerHTML = `
     <div class="hero">
       <div class="bigkanji">${escapeHTML(item.character)}</div>
       <div>
         <h2>${escapeHTML(item.character)}</h2>
-        <div>${showTranslation(item.meanings.pl, item.meanings.en)}</div>
-        ${item.jlpt ? `<span class="tag">JLPT ${escapeHTML(item.jlpt)} · przybliżony</span>` : ""}
-        ${item.grade ? `<span class="tag">Klasa ${escapeHTML(item.grade)}</span>` : ""}
-        ${item.strokes ? `<span class="tag">${escapeHTML(item.strokes)} kresek</span>` : ""}
+        <div>${displayTranslation(item.meanings?.pl, item.meanings?.en)}</div>
+        ${item.jlpt
+          ? `<span class="tag">JLPT ${escapeHTML(item.jlpt)} · przybliżony</span>`
+          : ""}
+        ${item.grade
+          ? `<span class="tag">Klasa ${escapeHTML(item.grade)}</span>`
+          : ""}
+        ${item.schoolStage
+          ? `<span class="tag">${escapeHTML(item.schoolStage)}</span>`
+          : ""}
+        ${item.strokes
+          ? `<span class="tag">${escapeHTML(item.strokes)} kresek</span>`
+          : ""}
       </div>
     </div>
+
     <div class="example">
       <h3>Odczyty</h3>
-      <p><b>On’yomi:</b> ${escapeHTML(item.onyomi.join("、") || "—")}</p>
-      <p><b>Kun’yomi:</b> ${escapeHTML(item.kunyomi.join("、") || "—")}</p>
+      <p><b>On’yomi:</b> ${escapeHTML((item.onyomi || []).join("、") || "—")}</p>
+      <p><b>Kun’yomi:</b> ${escapeHTML((item.kunyomi || []).join("、") || "—")}</p>
     </div>
+
     <div class="example">
-      <h3>Przykładowe słowa i zdania (${item.examples.length})</h3>
+      <h3>Słowa i zdania (${item.examples.length})</h3>
       ${examplesHTML}
     </div>
+
     <div class="actions">
       <button type="button" id="editSelected">Edytuj kanji</button>
-      <button type="button" class="secondary" id="speakSelected">Odsłuchaj</button>
+      <button type="button" id="speakSelected" class="secondary">Odsłuchaj</button>
     </div>
   `;
 
   $("#editSelected").addEventListener("click", () => openEditor(character));
+
   $("#speakSelected").addEventListener("click", () => {
-    if (!("speechSynthesis" in window)) return alert("Synteza mowy nie jest dostępna.");
+    if (!("speechSynthesis" in window)) {
+      alert("Synteza mowy nie jest dostępna w tej przeglądarce.");
+      return;
+    }
+
     const utterance = new SpeechSynthesisUtterance(character);
     utterance.lang = "ja-JP";
     speechSynthesis.cancel();
     speechSynthesis.speak(utterance);
   });
 }
+
+function localDateKey() {
+  const date = new Date();
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0")
+  ].join("-");
+}
+
 function renderDaily() {
-  const dateKey = localDateKey();
   $("#dailyDate").textContent = new Intl.DateTimeFormat("pl-PL", {
-    weekday:"long", day:"numeric", month:"long"
+    weekday: "long",
+    day: "numeric",
+    month: "long"
   }).format(new Date());
 
-  const pool = filteredRecords();
+  const pool = getFilteredRecords();
+
   if (!pool.length) {
-    $("#dailyContent").innerHTML = `<p class="muted">Brak kanji w wybranym filtrze.</p>`;
+    $("#dailyContent").innerHTML =
+      '<p class="muted">Brak kanji w aktualnym filtrze.</p>';
     return;
   }
 
-  // Deterministyczny wybór: ten sam dzień i filtr daje ten sam znak.
+  const dateKey = localDateKey();
   const filterKey = `${$("#level").value}|${$("#grade").value}`;
   const seedText = `${dateKey}|${filterKey}`;
+
   let seed = 0;
-  for (const char of seedText) seed = (seed * 31 + char.charCodeAt(0)) >>> 0;
+  for (const char of seedText) {
+    seed = (seed * 31 + char.charCodeAt(0)) >>> 0;
+  }
+
   const item = pool[seed % pool.length];
-  const done = readStorage(DAILY_KEY, {})[`${dateKey}|${filterKey}`] === item.character;
+  const doneKey = `${dateKey}|${filterKey}`;
+  const done = readStorage(DAILY_KEY, {})[doneKey] === item.character;
 
   $("#dailyContent").innerHTML = `
     <div class="daily-content">
       <div class="daily-kanji">${escapeHTML(item.character)}</div>
       <div>
-        <h3>${showTranslation(item.meanings.pl, item.meanings.en)}</h3>
-        ${item.jlpt ? `<span class="tag">JLPT ${escapeHTML(item.jlpt)} · przybliżony</span>` : ""}
-        ${item.grade ? `<span class="tag">Klasa ${escapeHTML(item.grade)}</span>` : ""}
+        <h3>${displayTranslation(item.meanings?.pl, item.meanings?.en)}</h3>
+        ${item.jlpt
+          ? `<span class="tag">JLPT ${escapeHTML(item.jlpt)} · przybliżony</span>`
+          : ""}
+        ${item.grade
+          ? `<span class="tag">Klasa ${escapeHTML(item.grade)}</span>`
+          : ""}
         <div class="actions">
-          <button id="openDaily">Otwórz kartę</button>
-          <button id="markDaily" class="secondary" ${done ? "disabled" : ""}>
+          <button type="button" id="openDaily">Otwórz kartę</button>
+          <button type="button" id="markDaily" class="secondary" ${done ? "disabled" : ""}>
             ${done ? "Przerobione dziś" : "Oznacz jako przerobione"}
           </button>
         </div>
@@ -434,110 +890,233 @@ function renderDaily() {
 
   $("#openDaily").addEventListener("click", () => {
     selectedCharacter = item.character;
-    renderDetail(item.character);
     renderList();
-    $("#detail").scrollIntoView({behavior:"smooth", block:"start"});
+    renderDetail(item.character);
+    $("#detail").scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   $("#markDaily").addEventListener("click", () => {
-    const saved = readStorage(DAILY_KEY, {});
-    saved[`${dateKey}|${filterKey}`] = item.character;
-    store(DAILY_KEY, saved);
+    const daily = readStorage(DAILY_KEY, {});
+    daily[doneKey] = item.character;
+    store(DAILY_KEY, daily);
     renderDaily();
   });
 }
+
 function addExampleEditor(example = {}) {
-  const container = document.createElement("div");
-  container.className = "example-editor";
-  container.innerHTML = `
+  const row = document.createElement("div");
+  row.className = "example-editor";
+
+  row.innerHTML = `
     <div class="example-editor-grid">
-      <label>Słowo po japońsku<input data-field="word" value="${escapeHTML(example.word || "")}"></label>
-      <label>Odczyt słowa<input data-field="reading" value="${escapeHTML(example.reading || "")}"></label>
-      <label>Znaczenie słowa — PL<input data-field="wordPL" value="${escapeHTML(example.wordMeaning?.pl || "")}"></label>
-      <label>Word meaning — EN<input data-field="wordEN" value="${escapeHTML(example.wordMeaning?.en || "")}"></label>
-      <label>Zdanie po japońsku<textarea data-field="sentence">${escapeHTML(example.sentence || "")}</textarea></label>
-      <label>Zdanie po polsku<textarea data-field="sentencePL">${escapeHTML(example.sentenceMeaning?.pl || "")}</textarea></label>
-      <label>Sentence in English<textarea data-field="sentenceEN">${escapeHTML(example.sentenceMeaning?.en || "")}</textarea></label>
+      <label>Słowo po japońsku
+        <input data-field="word" value="${escapeHTML(example.word || "")}">
+      </label>
+      <label>Odczyt słowa
+        <input data-field="reading" value="${escapeHTML(example.reading || "")}">
+      </label>
+      <label>Znaczenie słowa — polski
+        <input data-field="wordPL"
+          value="${escapeHTML(example.wordMeaning?.pl || "")}">
+      </label>
+      <label>Word meaning — English
+        <input data-field="wordEN"
+          value="${escapeHTML(example.wordMeaning?.en || "")}">
+      </label>
+      <label>Zdanie po japońsku
+        <textarea data-field="sentence">${escapeHTML(example.sentence || "")}</textarea>
+      </label>
+      <label>Znaczenie zdania — polski
+        <textarea data-field="sentencePL">${escapeHTML(
+          example.sentenceMeaning?.pl || ""
+        )}</textarea>
+      </label>
+      <label>Sentence meaning — English
+        <textarea data-field="sentenceEN">${escapeHTML(
+          example.sentenceMeaning?.en || ""
+        )}</textarea>
+      </label>
     </div>
-    <button type="button" class="secondary removeExample" style="margin-top:8px">Usuń przykład</button>
+    <button type="button" class="secondary removeExample" style="margin-top:8px">
+      Usuń przykład
+    </button>
   `;
-  container.querySelector(".removeExample").addEventListener("click", () => container.remove());
-  $("#examples").appendChild(container);
+
+  row.querySelector(".removeExample").addEventListener("click", () => row.remove());
+  $("#examples").appendChild(row);
 }
+
 function openEditor(character = "") {
-  const item = records.find(x => x.character === character);
+  const item = records.find(record => record.character === character);
+
   $("#kanjiForm").reset();
   $("#examples").innerHTML = "";
+
   $("#originalCharacter").value = item?.character || "";
   $("#character").value = item?.character || "";
   $("#gradeInput").value = item?.grade || "";
+  $("#stageInput").value = item?.schoolStage || "";
   $("#jlptInput").value = item?.jlpt || "";
-  $("#meaningPL").value = item?.meanings.pl || "";
-  $("#meaningEN").value = item?.meanings.en || "";
+  $("#strokesInput").value = item?.strokes || "";
+  $("#meaningPL").value = item?.meanings?.pl || "";
+  $("#meaningEN").value = item?.meanings?.en || "";
   $("#onyomiInput").value = (item?.onyomi || []).join(", ");
   $("#kunyomiInput").value = (item?.kunyomi || []).join(", ");
-  $("#formTitle").textContent = item ? `Edytuj kanji ${item.character}` : "Dodaj kanji";
+
+  const knownFields = new Set([
+    "character", "grade", "schoolStage", "jlpt", "level", "strokes",
+    "meanings", "onyomi", "kunyomi", "examples", "words"
+  ]);
+
+  const extras = Object.fromEntries(
+    Object.entries(item || {}).filter(([key]) => !knownFields.has(key))
+  );
+
+  $("#extraFields").value = Object.keys(extras).length
+    ? JSON.stringify(extras, null, 2)
+    : "";
+
+  $("#formTitle").textContent = item
+    ? `Edytuj kanji ${item.character}`
+    : "Dodaj kanji";
+
   (item?.examples || []).forEach(addExampleEditor);
   if (!item) addExampleEditor();
+
   showTab("manage");
-  window.scrollTo({top:0,behavior:"smooth"});
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
 function saveEditor(event) {
   event.preventDefault();
+
   const character = $("#character").value.trim();
   if (!character) return;
+
+  let extraFields = {};
+
+  if ($("#extraFields").value.trim()) {
+    try {
+      extraFields = JSON.parse($("#extraFields").value);
+      if (!extraFields || Array.isArray(extraFields) ||
+          typeof extraFields !== "object") {
+        throw new Error("Dodatkowe pola muszą być obiektem JSON.");
+      }
+    } catch (error) {
+      alert(`Nieprawidłowy JSON w polu dodatkowych informacji: ${error.message}`);
+      return;
+    }
+  }
 
   const examples = 
 $$(".example-editor").map(row => {
     const get = name => row.querySelector(`[data-field="${name}"]`).value.trim();
+
     return {
-      word:get("word"),
-      reading:get("reading"),
-      wordMeaning:{pl:get("wordPL"),en:get("wordEN")},
-      sentence:get("sentence"),
-      sentenceMeaning:{pl:get("sentencePL"),en:get("sentenceEN")}
+      word: get("word"),
+      reading: get("reading"),
+      wordMeaning: {
+        pl: get("wordPL"),
+        en: get("wordEN")
+      },
+      sentence: get("sentence"),
+      sentenceMeaning: {
+        pl: get("sentencePL"),
+        en: get("sentenceEN")
+      }
     };
-  }).filter(example => Object.values(example).some(value =>
-    typeof value === "string" ? value : Object.values(value).some(Boolean)
-  ));
+  }).filter(example =>
+    example.word || example.reading ||
+    example.wordMeaning.pl || example.wordMeaning.en ||
+    example.sentence ||
+    example.sentenceMeaning.pl || example.sentenceMeaning.en
+  );
+
+  const originalCharacter = $("#originalCharacter").value;
+  const previousRecord = records.find(record =>
+    record.character === originalCharacter || record.character === character
+  ) || {};
 
   const record = normalizeRecord({
+    ...previousRecord,
+    ...extraFields,
     character,
-    grade:$("#gradeInput").value,
-    jlpt:$("#jlptInput").value,
-    meanings:{pl:$("#meaningPL").value.trim(),en:$("#meaningEN").value.trim()},
-    onyomi:$("#onyomiInput").value.split(/[,;،]/).map(x=>x.trim()).filter(Boolean),
-    kunyomi:$("#kunyomiInput").value.split(/[,;،]/).map(x=>x.trim()).filter(Boolean),
+    grade: $("#gradeInput").value
+      ? Number($("#gradeInput").value)
+      : null,
+    schoolStage: $("#stageInput").value,
+    jlpt: $("#jlptInput").value,
+    strokes: $("#strokesInput").value
+      ? Number($("#strokesInput").value)
+      : null,
+    meanings: {
+      pl: $("#meaningPL").value.trim(),
+      en: $("#meaningEN").value.trim()
+    },
+    onyomi: $("#onyomiInput").value
+      .split(/[,;،]/).map(value => value.trim()).filter(Boolean),
+    kunyomi: $("#kunyomiInput").value
+      .split(/[,;،]/).map(value => value.trim()).filter(Boolean),
     examples
   });
 
-  const original = $("#originalCharacter").value;
-  if (original && original !== character) {
-    records = records.filter(item => item.character !== original);
+  if (originalCharacter && originalCharacter !== character) {
+    records = records.filter(item => item.character !== originalCharacter);
   }
-  const index = records.findIndex(item => item.character === character);
-  if (index >= 0) records[index] = record;
-  else records.push(record);
+
+  const existingIndex = records.findIndex(item => item.character === character);
+
+  if (existingIndex >= 0) {
+    records[existingIndex] = record;
+  } else {
+    records.push(record);
+  }
 
   selectedCharacter = character;
+  saveLocalDraft();
   renderAll();
   renderDetail(character);
-  $("#status").textContent = "Zmiana jest w pamięci strony. Skopiuj JSON i zapisz go w repozytorium.";
+
+  $("#status").textContent =
+    "Zapisano lokalny szkic. Pobierz JSON, aby wgrać zmiany na GitHub.";
+  $("#dataMessage").textContent = "Zapisano kanji i wszystkie przykłady lokalnie.";
+
   showTab("learn");
 }
-function showTab(id) {
-  $$(".view").forEach(view => view.classList.toggle("hidden", view.id !== id));
-  $$(".tab").forEach(button => {
-    const active = button.dataset.tab === id;
-    button.classList.toggle("active", active);
-    button.classList.toggle("secondary", !active);
-  });
+
+function exportFullJSON() {
+  const payload = {
+    version: 1,
+    source: "Kanji Path user database",
+    kanji: records
+  };
+
+  const blob = new Blob(
+    [JSON.stringify(payload, null, 2)],
+    { type: "application/json;charset=utf-8" }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "data.json";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+
+  $("#dataMessage").textContent =
+    "Pobrano pełny JSON ze wszystkimi kanji, słowami i przykładami.";
 }
+
 async function copyJSON() {
-  const text = JSON.stringify({version:1, kanji:records}, null, 2);
+  const text = JSON.stringify({
+    version: 1,
+    kanji: records
+  }, null, 2);
+
   try {
     await navigator.clipboard.writeText(text);
-    $("#status").textContent = "JSON skopiowany. Wklej go do data.json i zatwierdź zmianę na GitHubie.";
   } catch {
     const area = document.createElement("textarea");
     area.value = text;
@@ -545,34 +1124,109 @@ async function copyJSON() {
     area.select();
     document.execCommand("copy");
     area.remove();
-    $("#status").textContent = "JSON skopiowany. Wklej go do data.json i zatwierdź zmianę na GitHubie.";
   }
+
+  $("#status").textContent =
+    "JSON skopiowany. Wklej go do data.json na GitHubie.";
+}
+
+async function importFullJSON(file) {
+  if (!file) return;
+
+  try {
+    const parsed = JSON.parse(await file.text());
+    const incoming = Array.isArray(parsed) ? parsed : parsed.kanji;
+
+    if (!Array.isArray(incoming)) {
+      throw new Error("Plik musi zawierać tablicę kanji.");
+    }
+
+    const imported = incoming
+      .map(normalizeRecord)
+      .filter(item => item.character);
+
+    if (!imported.length) {
+      throw new Error("Nie znaleziono poprawnych rekordów kanji.");
+    }
+
+    if ($("#importMode").value === "replace") {
+      records = imported;
+    } else {
+      const byCharacter = new Map(records.map(item => [item.character, item]));
+      imported.forEach(item => byCharacter.set(item.character, item));
+      records = [...byCharacter.values()];
+    }
+
+    selectedCharacter = "";
+    saveLocalDraft();
+    renderAll();
+
+    $("#detail").innerHTML =
+      '<p class="muted">Wybierz znak z listy, aby zobaczyć szczegóły.</p>';
+    $("#dataMessage").textContent =
+      `Zaimportowano ${imported.length} rekordów. Zmiany zapisano lokalnie.`;
+  } catch (error) {
+    $("#dataMessage").textContent = `Import nie powiódł się: ${error.message}`;
+  } finally {
+    $("#importFile").value = "";
+  }
+}
+
+function showTab(id) {
+  $$(".view").forEach(view =>
+    view.classList.toggle("hidden", view.id !== id)
+  );
+
+  $$(".tab").forEach(button => {
+    const active = button.dataset.tab === id;
+    button.classList.toggle("active", active);
+    button.classList.toggle("secondary", !active);
+  });
 }
 
 $("#kanjiForm").addEventListener("submit", saveEditor);
 $("#addExample").addEventListener("click", () => addExampleEditor());
 $("#newEntry").addEventListener("click", () => openEditor(""));
 $("#copyJson").addEventListener("click", copyJSON);
-$("#refresh").addEventListener("click", loadJSON);
+$("#exportFile").addEventListener("click", exportFullJSON);
+
+$("#importFile").addEventListener("change", event => {
+  importFullJSON(event.target.files?.[0]);
+});
+
+$("#refresh").addEventListener("click", () => {
+  if (readStorage(DRAFT_KEY, null) &&
+      !confirm("Odświeżenie wczyta data.json z serwera i usunie lokalne zmiany. Kontynuować?")) {
+    return;
+  }
+
+  localStorage.removeItem(DRAFT_KEY);
+  loadJSON();
+});
+
 $("#language").value = settings.language || "pl";
 $("#language").addEventListener("change", () => {
   settings.language = $("#language").value;
   store(SETTINGS_KEY, settings);
   renderAll();
 });
+
 $("#search").addEventListener("input", renderList);
-["level","grade"].forEach(id => {
+
+["level", "grade"].forEach(id => {
   $("#" + id).addEventListener("change", () => {
     renderList();
     renderDaily();
   });
 });
+
 $("#clear").addEventListener("click", () => {
   $("#search").value = "";
   $("#level").value = "all";
   $("#grade").value = "all";
   renderAll();
 });
+
 $$(".tab").forEach(button => {
   button.addEventListener("click", () => showTab(button.dataset.tab));
 });

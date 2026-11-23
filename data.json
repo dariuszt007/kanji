@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "source": "Moja baza Kanji Path",
+  "kanji": [
+    {
+      "character": "日",
+      "grade": 1,
+      "schoolStage": "小学校",
+      "jlpt": "N5",
+      "strokes": 4,
+      "meanings": {
+        "pl": "słońce; dzień",
+        "en": "sun; day"
+      },
+      "onyomi": ["ニチ", "ジツ"],
+      "kunyomi": ["ひ", "-び", "-か"],
+      "examples": [
+        {
+          "word": "日本",
+          "reading": "にほん",
+          "wordMeaning": {
+            "pl": "Japonia",
+            "en": "Japan"
+          },
+          "sentence": "日本に住んでいます。",
+          "sentenceMeaning": {
+            "pl": "Mieszkam w Japonii.",
+            "en": "I live in Japan."
+          }
+        },
+        {
+          "word": "日曜日",
+          "reading": "にちようび",
+          "wordMeaning": {
+            "pl": "niedziela",
+            "en": "Sunday"
+          },
+          "sentence": "日曜日に友達と会います。",
+          "sentenceMeaning": {
+            "pl": "W niedzielę spotykam się z przyjaciółmi.",
+            "en": "I will meet my friends on Sunday."
+          }
+        }
+      ]
+    },
+    {
+      "character": "学",
+      "grade": 1,
+      "schoolStage": "小学校",
+      "jlpt": "N5",
+      "strokes": 8,
+      "meanings": {
+        "pl": "nauka; uczyć się",
+        "en": "study; learning"
+      },
+      "onyomi": ["ガク"],
+      "kunyomi": ["まな.ぶ"],
+      "examples": [
+        {
+          "word": "学校",
+          "reading": "がっこう",
+          "wordMeaning": {
+            "pl": "szkoła",
+            "en": "school"
+          },
+          "sentence": "毎日学校へ行きます。",
+          "sentenceMeaning": {
+            "pl": "Codziennie chodzę do szkoły.",
+            "en": "I go to school every day."
+          }
+        }
+      ]
+    },
+    {
+      "character": "誰",
+      "grade": null,
+      "schoolStage": "中学校",
+      "jlpt": "N5",
+      "strokes": 15,
+      "meanings": {
+        "pl": "",
+        "en": "who"
+      },
+      "onyomi": ["スイ"],
+      "kunyomi": ["だれ"],
+      "examples": [
+        {
+          "word": "誰か",
+          "reading": "だれか",
+          "wordMeaning": {
+            "pl": "ktoś",
+            "en": "someone"
+          },
+          "sentence": "誰かいますか。",
+          "sentenceMeaning": {
+            "pl": "Czy ktoś tam jest?",
+            "en": "Is anyone there?"
+          }
+        }
+      ]
+    }
+  ]
+}

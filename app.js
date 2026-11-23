@@ -47,16 +47,6 @@ function textCharacters(text) {
   return Array.from(String(text || ""));
 }
 
-/*
- * Format furigany:
- * [
- *   { "text": "日", "reading": "に" },
- *   { "text": "本", "reading": "ほん" },
- *   { "text": "に", "reading": "" }
- * ]
- *
- * Każdy znak kanji ma osobny reading. Kana i interpunkcja nie mają furigany.
- */
 function normalizeFurigana(text, source) {
   const characters = textCharacters(text);
   const input = Array.isArray(source) ? source : [];
@@ -69,6 +59,41 @@ function normalizeFurigana(text, source) {
       reading: isKanji(character) && savedPart?.text === character
         ? String(savedPart.reading || "")
         : ""
+    };
+  });
+}
+
+function migrateFurigana(oldText, newText, oldSegments) {
+  const oldCharacters = textCharacters(oldText);
+  const newCharacters = textCharacters(newText);
+  const normalizedOld = normalizeFurigana(oldText, oldSegments);
+  const used = new Set();
+
+  return newCharacters.map((character, newIndex) => {
+    if (!isKanji(character)) {
+      return { text: character, reading: "" };
+    }
+
+    let matchIndex = -1;
+
+    if (oldCharacters[newIndex] === character && !used.has(newIndex)) {
+      matchIndex = newIndex;
+    } else {
+      matchIndex = oldCharacters.findIndex((oldCharacter, index) =>
+        oldCharacter === character &&
+        isKanji(oldCharacter) &&
+        !used.has(index)
+      );
+    }
+
+    if (matchIndex < 0) {
+      return { text: character, reading: "" };
+    }
+
+    used.add(matchIndex);
+    return {
+      text: character,
+      reading: normalizedOld[matchIndex]?.reading || ""
     };
   });
 }
@@ -92,18 +117,27 @@ function normalizeRecord(item) {
   const character = String(item.character || "").trim();
 
   let characterFurigana = item.characterFurigana;
-  // Migracja starego pola jest bezpieczna tylko dla pojedynczego kanji.
-  if (!Array.isArray(characterFurigana) &&
-      Array.from(character).length === 1 &&
-      isKanji(character) &&
-      item.characterReading) {
-    characterFurigana = [{ text: character, reading: item.characterReading }];
+
+  // Obsługa starszego formatu z jednym odczytem dla pojedynczego kanji.
+  if (
+    !Array.isArray(characterFurigana) &&
+    textCharacters(character).length === 1 &&
+    isKanji(character) &&
+    item.characterReading
+  ) {
+    characterFurigana = [{
+      text: character,
+      reading: item.characterReading
+    }];
   }
 
   return {
     ...item,
     character,
-    characterFurigana: normalizeFurigana(character, characterFurigana),
+    characterFurigana: normalizeFurigana(
+      character,
+      characterFurigana
+    ),
     grade: item.grade ?? "",
     schoolStage: item.schoolStage || "",
     jlpt: item.jlpt || item.level || "",
@@ -199,9 +233,12 @@ async function loadJSON() {
       cache: "no-store"
     });
 
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
 
     const data = await response.json();
+
     if (!data || !Array.isArray(data.kanji)) {
       throw new Error("JSON musi zawierać tablicę kanji.");
     }
@@ -209,9 +246,11 @@ async function loadJSON() {
     const draft = readStorage(DRAFT_KEY, null);
     const source = Array.isArray(draft?.kanji) ? draft.kanji : data.kanji;
 
-    records = source.map(normalizeRecord).filter(item => item.character);
-    selectedCharacter = "";
+    records = source
+      .map(normalizeRecord)
+      .filter(item => item.character);
 
+    selectedCharacter = "";
     $("#status").textContent =
       `Wczytano ${records.length.toLocaleString("pl-PL")} kanji`;
 
@@ -232,8 +271,13 @@ function getFilteredRecords() {
   const selectedGrade = $("#grade").value;
 
   return records.filter(item => {
-    if (selectedLevel !== "all" && item.jlpt !== selectedLevel) return false;
-    if (selectedGrade !== "all" && String(item.grade) !== selectedGrade) return false;
+    if (selectedLevel !== "all" && item.jlpt !== selectedLevel) {
+      return false;
+    }
+
+    if (selectedGrade !== "all" && String(item.grade) !== selectedGrade) {
+      return false;
+    }
 
     const exampleText = item.examples.flatMap(example => [
       example.word,
@@ -277,9 +321,11 @@ function renderList() {
     : "";
 
   $("#cards").innerHTML = visible.map(item => `
-    <button type="button"
+    <button
+      type="button"
       class="tile ${item.character === selectedCharacter ? "selected" : ""}"
-      data-character="${escapeHTML(item.character)}">
+      data-character="${escapeHTML(item.character)}"
+    >
       <span class="glyph">${renderFurigana(
         item.character,
         item.characterFurigana
@@ -329,28 +375,35 @@ function renderDetail(character) {
         : ""}
       ${example.sentence ? `
         <div class="sentence-actions">
-          <button type="button" class="button secondary"
-            data-listen-sentence="${index}">
+          <button
+            type="button"
+            class="button secondary"
+            data-listen-sentence="${index}"
+          >
             Odsłuchaj zdanie
           </button>
-          <button type="button" class="button secondary"
-            data-check-sentence="${index}">
+          <button
+            type="button"
+            class="button secondary"
+            data-check-sentence="${index}"
+          >
             Nagraj i sprawdź wymowę
           </button>
         </div>
-        <p id="sentenceStatus${index}" class="sentence-status" aria-live="polite"></p>
+        <p
+          id="sentenceStatus${index}"
+          class="sentence-status"
+          aria-live="polite"
+        ></p>
       ` : ""}
     </article>
   `).join("");
 
-  const firstSentence = item.examples.find(example => example.sentence);
-
   $("#detail").innerHTML = `
     <div class="hero">
-      <div class="bigkanji">${renderFurigana(
-        item.character,
-        item.characterFurigana
-      )}</div>
+      <div class="bigkanji">
+        ${renderFurigana(item.character, item.characterFurigana)}
+      </div>
       <div>
         <h2>${escapeHTML(item.character)}</h2>
         <div>${displayTranslation(item.meanings.pl, item.meanings.en)}</div>
@@ -374,9 +427,8 @@ function renderDetail(character) {
       <p><b>On’yomi:</b> ${escapeHTML(item.onyomi.join("、") || "—")}</p>
       <p><b>Kun’yomi:</b> ${escapeHTML(item.kunyomi.join("、") || "—")}</p>
       <div class="actions">
-        <button type="button" id="editSelected" class="button">Edytuj kanji</button>
-        <button type="button" id="listenFirstSentence" class="button secondary">
-          Odsłuchaj zdanie
+        <button type="button" id="editSelected" class="button">
+          Edytuj kanji
         </button>
       </div>
     </div>
@@ -391,8 +443,12 @@ function renderDetail(character) {
       <p class="muted">Narysuj znak palcem lub myszą.</p>
       <canvas id="writingCanvas" width="640" height="440"></canvas>
       <div class="actions">
-        <button type="button" id="clearCanvas" class="button secondary">Wyczyść</button>
-        <button type="button" id="showKanji" class="button secondary">Pokaż wzór pisma</button>
+        <button type="button" id="clearCanvas" class="button secondary">
+          Wyczyść
+        </button>
+        <button type="button" id="showKanji" class="button secondary">
+          Pokaż wzór pisma
+        </button>
       </div>
       <p id="practiceMessage" class="status" aria-live="polite"></p>
     </section>
@@ -400,20 +456,14 @@ function renderDetail(character) {
 
   $("#editSelected").addEventListener("click", () => openEditor(character));
 
-  $("#listenFirstSentence").addEventListener("click", () => {
-    if (firstSentence) {
-      speakJapanese(firstSentence.sentence, $("#practiceMessage"));
-    } else {
-      $("#practiceMessage").textContent =
-        "Do tego kanji nie dodano jeszcze zdania.";
-    }
-  });
-
   $$("[data-listen-sentence]").forEach(button => {
     button.addEventListener("click", () => {
-      const example = item.examples[Number(button.dataset.listenSentence)];
+      const index = Number(button.dataset.listenSentence);
+      const example = item.examples[index];
+      const status = $(`#sentenceStatus${index}`);
+
       if (example?.sentence) {
-        speakJapanese(example.sentence, $(`#sentenceStatus${button.dataset.listenSentence}`));
+        speakJapanese(example.sentence, status);
       }
     });
   });
@@ -422,7 +472,10 @@ function renderDetail(character) {
     button.addEventListener("click", () => {
       const index = Number(button.dataset.checkSentence);
       const example = item.examples[index];
-      if (example) checkSentencePronunciation(example, index);
+
+      if (example) {
+        checkSentencePronunciation(example, index);
+      }
     });
   });
 
@@ -441,6 +494,7 @@ function setupPracticeTools(item) {
 
   function canvasPoint(event) {
     const rect = canvas.getBoundingClientRect();
+
     return {
       x: (event.clientX - rect.left) * canvas.width / rect.width,
       y: (event.clientY - rect.top) * canvas.height / rect.height
@@ -450,6 +504,7 @@ function setupPracticeTools(item) {
   canvas.addEventListener("pointerdown", event => {
     drawing = true;
     canvas.setPointerCapture(event.pointerId);
+
     const point = canvasPoint(event);
     context.beginPath();
     context.moveTo(point.x, point.y);
@@ -457,6 +512,7 @@ function setupPracticeTools(item) {
 
   canvas.addEventListener("pointermove", event => {
     if (!drawing) return;
+
     const point = canvasPoint(event);
     context.lineTo(point.x, point.y);
     context.stroke();
@@ -483,7 +539,7 @@ function setupPracticeTools(item) {
       try {
         await document.fonts.load('280px "Klee One"');
       } catch {
-        // W razie braku internetu użyty zostanie font zastępczy.
+        // Jeśli fontu nie da się załadować, canvas użyje fontu zastępczego.
       }
     }
 
@@ -500,10 +556,8 @@ function setupPracticeTools(item) {
 
 function speakJapanese(text, statusElement) {
   if (!("speechSynthesis" in window)) {
-    if (statusElement) {
-      statusElement.textContent =
-        "Synteza mowy nie jest dostępna w tej przeglądarce.";
-    }
+    statusElement.textContent =
+      "Odsłuch nie jest obsługiwany przez tę przeglądarkę.";
     return;
   }
 
@@ -511,13 +565,70 @@ function speakJapanese(text, statusElement) {
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "ja-JP";
+  utterance.onerror = () => {
+    statusElement.textContent = "Nie udało się odtworzyć zdania.";
+  };
+
   speechSynthesis.speak(utterance);
 }
 
+function katakanaToHiragana(text) {
+  return Array.from(String(text || ""), character => {
+    const code = character.codePointAt(0);
+
+    return code >= 0x30a1 && code <= 0x30f6
+      ? String.fromCodePoint(code - 0x60)
+      : character;
+  }).join("");
+}
+
 function normalizeSpeechText(text) {
-  return String(text || "")
+  return katakanaToHiragana(String(text || ""))
     .normalize("NFC")
     .replace(/[\s。、！？,.!?「」『』（）()]/g, "");
+}
+
+function expectedSentenceReading(example) {
+  const segments = normalizeFurigana(
+    example.sentence,
+    example.sentenceFurigana
+  );
+
+  const missingKanji = [
+    ...new Set(
+      segments
+        .filter(segment => isKanji(segment.text) && !segment.reading.trim())
+        .map(segment => segment.text)
+    )
+  ];
+
+  if (missingKanji.length) {
+    return { reading: "", missingKanji };
+  }
+
+  const reading = segments.map(segment =>
+    isKanji(segment.text) ? segment.reading : segment.text
+  ).join("");
+
+  return { reading, missingKanji: [] };
+}
+
+function firstDifference(expected, heard) {
+  const expectedCharacters = Array.from(expected);
+  const heardCharacters = Array.from(heard);
+  const length = Math.max(expectedCharacters.length, heardCharacters.length);
+
+  for (let index = 0; index < length; index++) {
+    if (expectedCharacters[index] !== heardCharacters[index]) {
+      return {
+        position: index + 1,
+        expected: expectedCharacters[index] || "koniec wypowiedzi",
+        heard: heardCharacters[index] || "brak"
+      };
+    }
+  }
+
+  return null;
 }
 
 function checkSentencePronunciation(example, index) {
@@ -527,7 +638,15 @@ function checkSentencePronunciation(example, index) {
 
   if (!Recognition) {
     status.textContent =
-      "Ta przeglądarka nie obsługuje rozpoznawania mowy. Spróbuj w Chrome.";
+      "Rozpoznawanie mowy nie jest dostępne w tej przeglądarce. Spróbuj w Chrome.";
+    return;
+  }
+
+  const target = expectedSentenceReading(example);
+
+  if (target.missingKanji.length) {
+    status.textContent =
+      `Najpierw wpisz furiganę osobno przy kanji: ${target.missingKanji.join("、")}.`;
     return;
   }
 
@@ -539,18 +658,42 @@ function checkSentencePronunciation(example, index) {
   status.textContent = "Słucham przez mikrofon — przeczytaj zdanie na głos.";
 
   recognition.onresult = event => {
-    const heard = event.results[0][0].transcript || "";
-    const matches =
-      normalizeSpeechText(heard) === normalizeSpeechText(example.sentence);
+    const heardRaw = event.results[0][0].transcript || "";
+    const heard = normalizeSpeechText(heardRaw);
+    const sentence = normalizeSpeechText(example.sentence);
+    const reading = normalizeSpeechText(target.reading);
 
-    status.textContent = matches
-      ? `Rozpoznano „${heard}” — transkrypcja zgadza się ze zdaniem.`
-      : `Rozpoznano „${heard}”. Porównaj transkrypcję z: ${example.sentence}`;
+    if (heard === sentence || heard === reading) {
+      status.textContent =
+        `Dobrze! Rozpoznany tekst „${heardRaw}” zgadza się ze zdaniem.`;
+      return;
+    }
+
+    const resultContainsKanji = Array.from(heardRaw).some(isKanji);
+    const expected = resultContainsKanji ? sentence : reading;
+    const difference = firstDifference(expected, heard);
+
+    if (difference) {
+      const expectedDescription = resultContainsKanji
+        ? `zdania „${example.sentence}”`
+        : `odczytu „${target.reading}”`;
+
+      status.textContent =
+        `Rozpoznano „${heardRaw}”, a oczekiwano ${expectedDescription}. ` +
+        `Pierwsza różnica: pozycja ${difference.position}; ` +
+        `oczekiwano „${difference.expected}”, rozpoznano „${difference.heard}”. ` +
+        "Sprawdź ten fragment i spróbuj ponownie.";
+    } else {
+      status.textContent =
+        `Rozpoznano „${heardRaw}”, ale wynik różni się od oczekiwanego. ` +
+        `Odczyt z furigany: „${target.reading}”. Spróbuj powiedzieć całe zdanie wyraźniej.`;
+    }
   };
 
   recognition.onerror = event => {
     status.textContent =
-      `Nie udało się rozpoznać mowy (${event.error}). Sprawdź mikrofon i uprawnienia.`;
+      `Nie udało się rozpoznać mowy (${event.error}). ` +
+      "Sprawdź mikrofon i uprawnienia przeglądarki.";
   };
 
   recognition.onend = () => {
@@ -602,15 +745,19 @@ function renderDaily() {
 
   $("#dailyContent").innerHTML = `
     <div class="daily-content">
-      <div class="daily-kanji">${renderFurigana(
-        item.character,
-        item.characterFurigana
-      )}</div>
+      <div class="daily-kanji">
+        ${renderFurigana(item.character, item.characterFurigana)}
+      </div>
       <div>
         <h3>${displayTranslation(item.meanings.pl, item.meanings.en)}</h3>
         <div class="actions">
           <button type="button" id="openDaily" class="button">Otwórz kartę</button>
-          <button type="button" id="markDaily" class="button secondary" ${done ? "disabled" : ""}>
+          <button
+            type="button"
+            id="markDaily"
+            class="button secondary"
+            ${done ? "disabled" : ""}
+          >
             ${done ? "Przerobione dziś" : "Oznacz jako przerobione"}
           </button>
         </div>
@@ -638,19 +785,20 @@ function renderFuriganaEditor(container, text, sourceSegments = []) {
   const segments = normalizeFurigana(text, sourceSegments);
   container.replaceChildren();
 
-  const positions = characters
+  const kanjiIndexes = characters
     .map((character, index) => isKanji(character) ? index : -1)
     .filter(index => index >= 0);
 
-  if (!positions.length) {
+  if (!kanjiIndexes.length) {
     const hint = document.createElement("p");
     hint.className = "furigana-hint muted";
-    hint.textContent = "Wpisz tekst zawierający kanji, aby dodać furiganę.";
+    hint.textContent =
+      "Wpisz tekst zawierający kanji, aby dodać pola furigany.";
     container.appendChild(hint);
     return;
   }
 
-  positions.forEach(index => {
+  kanjiIndexes.forEach(index => {
     const wrapper = document.createElement("label");
     wrapper.className = "furigana-item";
 
@@ -704,26 +852,41 @@ function addExampleEditor(example = {}) {
 
   row.innerHTML = `
     <div class="example-editor-grid">
-      <label>Słowo po japońsku
+      <label>
+        Słowo po japońsku
         <input data-field="word" value="${escapeHTML(example.word || "")}">
       </label>
-      <label>Znaczenie słowa — polski
-        <input data-field="wordPL"
-          value="${escapeHTML(example.wordMeaning?.pl || "")}">
+
+      <label>
+        Znaczenie słowa — polski
+        <input
+          data-field="wordPL"
+          value="${escapeHTML(example.wordMeaning?.pl || "")}"
+        >
       </label>
-      <label>Znaczenie słowa — angielski
-        <input data-field="wordEN"
-          value="${escapeHTML(example.wordMeaning?.en || "")}">
+
+      <label>
+        Znaczenie słowa — angielski
+        <input
+          data-field="wordEN"
+          value="${escapeHTML(example.wordMeaning?.en || "")}"
+        >
       </label>
-      <label>Zdanie po japońsku
+
+      <label>
+        Zdanie po japońsku
         <textarea data-field="sentence">${escapeHTML(example.sentence || "")}</textarea>
       </label>
-      <label>Znaczenie zdania — polski
+
+      <label>
+        Znaczenie zdania — polski
         <textarea data-field="sentencePL">${escapeHTML(
           example.sentenceMeaning?.pl || ""
         )}</textarea>
       </label>
-      <label>Znaczenie zdania — angielski
+
+      <label>
+        Znaczenie zdania — angielski
         <textarea data-field="sentenceEN">${escapeHTML(
           example.sentenceMeaning?.en || ""
         )}</textarea>
@@ -750,24 +913,47 @@ function addExampleEditor(example = {}) {
   const wordEditor = row.querySelector('[data-furigana="word"]');
   const sentenceEditor = row.querySelector('[data-furigana="sentence"]');
 
-  renderFuriganaEditor(wordEditor, example.word || "", example.wordFurigana);
+  renderFuriganaEditor(
+    wordEditor,
+    example.word || "",
+    example.wordFurigana || []
+  );
+
   renderFuriganaEditor(
     sentenceEditor,
     example.sentence || "",
-    example.sentenceFurigana
+    example.sentenceFurigana || []
   );
 
   wordInput.addEventListener("input", () => {
-    const oldSegments = collectFurigana(wordInput.value, wordEditor);
-    renderFuriganaEditor(wordEditor, wordInput.value, oldSegments);
+    const oldText = wordInput.dataset.previousText || "";
+    const oldSegments = collectFurigana(oldText, wordEditor);
+    const migrated = migrateFurigana(oldText, wordInput.value, oldSegments);
+
+    renderFuriganaEditor(wordEditor, wordInput.value, migrated);
+    wordInput.dataset.previousText = wordInput.value;
   });
 
   sentenceInput.addEventListener("input", () => {
-    const oldSegments = collectFurigana(sentenceInput.value, sentenceEditor);
-    renderFuriganaEditor(sentenceEditor, sentenceInput.value, oldSegments);
+    const oldText = sentenceInput.dataset.previousText || "";
+    const oldSegments = collectFurigana(oldText, sentenceEditor);
+    const migrated = migrateFurigana(
+      oldText,
+      sentenceInput.value,
+      oldSegments
+    );
+
+    renderFuriganaEditor(sentenceEditor, sentenceInput.value, migrated);
+    sentenceInput.dataset.previousText = sentenceInput.value;
   });
 
-  row.querySelector(".remove-example").addEventListener("click", () => row.remove());
+  wordInput.dataset.previousText = wordInput.value;
+  sentenceInput.dataset.previousText = sentenceInput.value;
+
+  row.querySelector(".remove-example").addEventListener("click", () => {
+    row.remove();
+  });
+
   $("#examples").appendChild(row);
 }
 
@@ -796,16 +982,24 @@ function openEditor(character = "") {
   );
 
   $("#character").oninput = () => {
-    const oldSegments = collectFurigana(
-      $("#character").value,
-      characterEditor
-    );
-    renderFuriganaEditor(
-      characterEditor,
+    const oldText = $("#character").dataset.previousText || "";
+    const oldSegments = collectFurigana(oldText, characterEditor);
+    const migrated = migrateFurigana(
+      oldText,
       $("#character").value,
       oldSegments
     );
+
+    renderFuriganaEditor(
+      characterEditor,
+      $("#character").value,
+      migrated
+    );
+
+    $("#character").dataset.previousText = $("#character").value;
   };
+
+  $("#character").dataset.previousText = $("#character").value;
 
   const knownFields = new Set([
     "character",
@@ -854,7 +1048,8 @@ function saveEditor(event) {
     try {
       extraFields = JSON.parse($("#extraFields").value);
 
-      if (!extraFields || Array.isArray(extraFields) ||
+      if (!extraFields ||
+          Array.isArray(extraFields) ||
           typeof extraFields !== "object") {
         throw new Error("Dodatkowe pola muszą być obiektem JSON.");
       }
@@ -917,18 +1112,26 @@ $$(".example-editor").map(row => {
     ...extraFields,
     character,
     characterFurigana,
-    grade: $("#gradeInput").value ? Number($("#gradeInput").value) : null,
+    grade: $("#gradeInput").value
+      ? Number($("#gradeInput").value)
+      : null,
     schoolStage: $("#stageInput").value,
     jlpt: $("#jlptInput").value,
-    strokes: $("#strokesInput").value ? Number($("#strokesInput").value) : null,
+    strokes: $("#strokesInput").value
+      ? Number($("#strokesInput").value)
+      : null,
     meanings: {
       pl: $("#meaningPL").value.trim(),
       en: $("#meaningEN").value.trim()
     },
     onyomi: $("#onyomiInput").value
-      .split(/[,;،]/).map(value => value.trim()).filter(Boolean),
+      .split(/[,;،]/)
+      .map(value => value.trim())
+      .filter(Boolean),
     kunyomi: $("#kunyomiInput").value
-      .split(/[,;،]/).map(value => value.trim()).filter(Boolean),
+      .split(/[,;،]/)
+      .map(value => value.trim())
+      .filter(Boolean),
     examples
   });
 
@@ -936,10 +1139,15 @@ $$(".example-editor").map(row => {
     records = records.filter(item => item.character !== originalCharacter);
   }
 
-  const existingIndex = records.findIndex(item => item.character === character);
+  const existingIndex = records.findIndex(
+    item => item.character === character
+  );
 
-  if (existingIndex >= 0) records[existingIndex] = record;
-  else records.push(record);
+  if (existingIndex >= 0) {
+    records[existingIndex] = record;
+  } else {
+    records.push(record);
+  }
 
   selectedCharacter = character;
   saveLocalDraft();
@@ -949,7 +1157,7 @@ $$(".example-editor").map(row => {
   $("#status").textContent =
     "Zapisano lokalnie. Pobierz JSON, aby wgrać zmiany na GitHub.";
   $("#dataMessage").textContent =
-    "Zapisano kanji, furiganę i przykłady w lokalnym szkicu.";
+    "Zapisano kanji, furiganę oraz przykłady w lokalnym szkicu.";
 
   showTab("learn");
 }
@@ -962,6 +1170,7 @@ function exportJSON(download = true) {
   };
 
   const text = JSON.stringify(data, null, 2);
+
   if (!download) return text;
 
   const blob = new Blob([text], {
@@ -970,13 +1179,15 @@ function exportJSON(download = true) {
 
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
+
   link.href = url;
   link.download = "data.json";
+
   document.body.appendChild(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
 
+  URL.revokeObjectURL(url);
   $("#dataMessage").textContent = "Pobrano pełny plik data.json.";
 }
 
@@ -1005,6 +1216,7 @@ async function importJSON(file) {
       const byCharacter = new Map(
         records.map(item => [item.character, item])
       );
+
       imported.forEach(item => byCharacter.set(item.character, item));
       records = [...byCharacter.values()];
     }
@@ -1013,7 +1225,8 @@ async function importJSON(file) {
     saveLocalDraft();
     renderAll();
 
-    $("#detail").innerHTML = '<p class="muted">Wybierz znak z listy.</p>';
+    $("#detail").innerHTML =
+      '<p class="muted">Wybierz znak z listy.</p>';
     $("#dataMessage").textContent =
       `Zaimportowano ${imported.length} rekordów.`;
   } catch (error) {
@@ -1036,6 +1249,7 @@ function startQuiz() {
   }
 
   const question = pool[Math.floor(Math.random() * pool.length)];
+
   const choices = [
     question,
     ...pool
@@ -1046,15 +1260,19 @@ function startQuiz() {
 
   $("#quizContent").innerHTML = `
     <p>Wybierz znaczenie znaku:</p>
-    <div class="bigkanji">${renderFurigana(
-      question.character,
-      question.characterFurigana
-    )}</div>
+    <div class="bigkanji">
+      ${renderFurigana(
+        question.character,
+        question.characterFurigana
+      )}
+    </div>
     <div class="quiz-choices">
       ${choices.map(item => `
-        <button class="button quiz-choice"
+        <button
+          class="button quiz-choice"
           data-answer="${escapeHTML(item.character)}"
-          type="button">
+          type="button"
+        >
           ${displayTranslation(item.meanings.pl, item.meanings.en)}
         </button>
       `).join("")}
@@ -1064,11 +1282,10 @@ function startQuiz() {
 
   $$("#quizContent [data-answer]").forEach(button => {
     button.addEventListener("click", () => {
-      const correct = button.dataset.answer === question.character;
-
-      $("#quizFeedback").textContent = correct
-        ? "Dobrze!"
-        : `Nie tym razem. Poprawne kanji: ${question.character}`;
+      $("#quizFeedback").textContent =
+        button.dataset.answer === question.character
+          ? "Dobrze!"
+          : `Nie tym razem. Poprawne kanji: ${question.character}`;
     });
   });
 }
@@ -1091,13 +1308,16 @@ $("#copyJson").addEventListener("click", async () => {
     $("#status").textContent = "JSON skopiowany do schowka.";
   } catch {
     exportJSON(true);
-    $("#status").textContent = "Nie można skopiować — pobrano plik JSON.";
+    $("#status").textContent =
+      "Nie można skopiować — pobrano plik JSON.";
   }
 });
 
 $("#refresh").addEventListener("click", () => {
-  if (readStorage(DRAFT_KEY, null) &&
-      !confirm("Odświeżenie usunie lokalny szkic i wczyta data.json. Kontynuować?")) {
+  if (
+    readStorage(DRAFT_KEY, null) &&
+    !confirm("Odświeżenie usunie lokalny szkic i wczyta data.json. Kontynuować?")
+  ) {
     return;
   }
 
@@ -1106,6 +1326,7 @@ $("#refresh").addEventListener("click", () => {
 });
 
 $("#language").value = settings.language || "pl";
+
 $("#language").addEventListener("change", () => {
   settings.language = $("#language").value;
   store(SETTINGS_KEY, settings);
@@ -1126,7 +1347,10 @@ $("#clear").addEventListener("click", () => {
 $$(".tab").forEach(button => {
   button.addEventListener("click", () => {
     showTab(button.dataset.tab);
-    if (button.dataset.tab === "quiz") startQuiz();
+
+    if (button.dataset.tab === "quiz") {
+      startQuiz();
+    }
   });
 });
 

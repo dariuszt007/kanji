@@ -25,18 +25,18 @@ function store(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.warn("Nie udało się zapisać danych lokalnie:", error);
+    console.warn("Nie udało się zapisać lokalnie:", error);
   }
 }
 
 function escapeHTML(value = "") {
-  return String(value).replace(/[&<>"']/g, char => ({
+  return String(value).replace(/[&<>"']/g, character => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
     "'": "&#39;"
-  })[char]);
+  })[character]);
 }
 
 function isKanji(character) {
@@ -48,23 +48,26 @@ function textCharacters(text) {
 }
 
 /*
- * Furigana przechowujemy znak po znaku:
- * [{ "text": "日", "reading": "に" }, { "text": "本", "reading": "ほん" }]
- * Znaki kana i interpunkcja mają puste reading.
+ * Format furigany:
+ * [
+ *   { "text": "日", "reading": "に" },
+ *   { "text": "本", "reading": "ほん" },
+ *   { "text": "に", "reading": "" }
+ * ]
+ *
+ * Każdy znak kanji ma osobny reading. Kana i interpunkcja nie mają furigany.
  */
 function normalizeFurigana(text, source) {
   const characters = textCharacters(text);
   const input = Array.isArray(source) ? source : [];
 
   return characters.map((character, index) => {
-    const sameIndex = input[index];
-    const matching = input.find(part => part && part.text === character);
-    const sourcePart = sameIndex?.text === character ? sameIndex : matching;
+    const savedPart = input[index];
 
     return {
       text: character,
-      reading: isKanji(character)
-        ? String(sourcePart?.reading || "")
+      reading: isKanji(character) && savedPart?.text === character
+        ? String(savedPart.reading || "")
         : ""
     };
   });
@@ -88,13 +91,19 @@ function normalizeRecord(item) {
 
   const character = String(item.character || "").trim();
 
+  let characterFurigana = item.characterFurigana;
+  // Migracja starego pola jest bezpieczna tylko dla pojedynczego kanji.
+  if (!Array.isArray(characterFurigana) &&
+      Array.from(character).length === 1 &&
+      isKanji(character) &&
+      item.characterReading) {
+    characterFurigana = [{ text: character, reading: item.characterReading }];
+  }
+
   return {
     ...item,
     character,
-    characterFurigana: normalizeFurigana(
-      character,
-      item.characterFurigana
-    ),
+    characterFurigana: normalizeFurigana(character, characterFurigana),
     grade: item.grade ?? "",
     schoolStage: item.schoolStage || "",
     jlpt: item.jlpt || item.level || "",
@@ -139,17 +148,6 @@ function saveLocalDraft() {
   store(DRAFT_KEY, { version: 2, kanji: records });
 }
 
-function showTab(id) {
-  $$(".view").forEach(view => {
-    view.classList.toggle("hidden", view.id !== id);
-  });
-
-  $$(".tab").forEach(button => {
-    const active = button.dataset.tab === id;
-    button.classList.toggle("active", active);
-  });
-}
-
 function displayTranslation(polish, english) {
   const pl = String(polish || "").trim();
   const en = String(english || "").trim();
@@ -172,14 +170,25 @@ function renderFurigana(text, segments) {
   const normalized = normalizeFurigana(text, segments);
 
   return normalized.map(part => {
-    const safeText = escapeHTML(part.text);
+    const safeCharacter = escapeHTML(part.text);
     const safeReading = escapeHTML(part.reading);
 
     if (isKanji(part.text) && safeReading) {
-      return `<ruby>${safeText}<rt>${safeReading}</rt></ruby>`;
+      return `<ruby>${safeCharacter}<rt>${safeReading}</rt></ruby>`;
     }
-    return safeText;
+
+    return safeCharacter;
   }).join("");
+}
+
+function showTab(id) {
+  $$(".view").forEach(view => {
+    view.classList.toggle("hidden", view.id !== id);
+  });
+
+  $$(".tab").forEach(button => {
+    button.classList.toggle("active", button.dataset.tab === id);
+  });
 }
 
 async function loadJSON() {
@@ -226,7 +235,7 @@ function getFilteredRecords() {
     if (selectedLevel !== "all" && item.jlpt !== selectedLevel) return false;
     if (selectedGrade !== "all" && String(item.grade) !== selectedGrade) return false;
 
-    const examples = item.examples.flatMap(example => [
+    const exampleText = item.examples.flatMap(example => [
       example.word,
       example.wordMeaning?.pl,
       example.wordMeaning?.en,
@@ -242,7 +251,7 @@ function getFilteredRecords() {
       item.schoolStage,
       ...item.onyomi,
       ...item.kunyomi,
-      ...examples
+      ...exampleText
     ].join(" ").toLowerCase();
 
     return !query || searchable.includes(query);
@@ -271,9 +280,10 @@ function renderList() {
     <button type="button"
       class="tile ${item.character === selectedCharacter ? "selected" : ""}"
       data-character="${escapeHTML(item.character)}">
-      <span class="glyph">
-        ${renderFurigana(item.character, item.characterFurigana)}
-      </span>
+      <span class="glyph">${renderFurigana(
+        item.character,
+        item.characterFurigana
+      )}</span>
       <small>${displayTranslation(item.meanings.pl, item.meanings.en)}</small>
     </button>
   `).join("");
@@ -291,40 +301,56 @@ function renderDetail(character) {
   const item = records.find(record => record.character === character);
   if (!item) return;
 
-  const examplesHTML = item.examples.length
-    ? item.examples.map(example => `
-      <div class="example">
-        ${example.word
-          ? `<h3 class="japanese-text">
-              ${renderFurigana(example.word, example.wordFurigana)}
-            </h3>`
-          : "<h3>Przykład</h3>"}
-        ${(example.wordMeaning.pl || example.wordMeaning.en)
-          ? `<div>${displayTranslation(
-              example.wordMeaning.pl,
-              example.wordMeaning.en
-            )}</div>`
-          : ""}
-        ${example.sentence
-          ? `<div class="example-ja">
-              ${renderFurigana(example.sentence, example.sentenceFurigana)}
-            </div>`
-          : ""}
-        ${(example.sentenceMeaning.pl || example.sentenceMeaning.en)
-          ? `<div>${displayTranslation(
-              example.sentenceMeaning.pl,
-              example.sentenceMeaning.en
-            )}</div>`
-          : ""}
-      </div>
-    `).join("")
-    : '<p class="muted">Nie dodano jeszcze przykładów.</p>';
+  const examplesHTML = item.examples.map((example, index) => `
+    <article class="example">
+      ${example.word
+        ? `<h3 class="japanese-text">${renderFurigana(
+            example.word,
+            example.wordFurigana
+          )}</h3>`
+        : ""}
+      ${(example.wordMeaning.pl || example.wordMeaning.en)
+        ? `<div>${displayTranslation(
+            example.wordMeaning.pl,
+            example.wordMeaning.en
+          )}</div>`
+        : ""}
+      ${example.sentence
+        ? `<div class="example-ja">${renderFurigana(
+            example.sentence,
+            example.sentenceFurigana
+          )}</div>`
+        : ""}
+      ${(example.sentenceMeaning.pl || example.sentenceMeaning.en)
+        ? `<div>${displayTranslation(
+            example.sentenceMeaning.pl,
+            example.sentenceMeaning.en
+          )}</div>`
+        : ""}
+      ${example.sentence ? `
+        <div class="sentence-actions">
+          <button type="button" class="button secondary"
+            data-listen-sentence="${index}">
+            Odsłuchaj zdanie
+          </button>
+          <button type="button" class="button secondary"
+            data-check-sentence="${index}">
+            Nagraj i sprawdź wymowę
+          </button>
+        </div>
+        <p id="sentenceStatus${index}" class="sentence-status" aria-live="polite"></p>
+      ` : ""}
+    </article>
+  `).join("");
+
+  const firstSentence = item.examples.find(example => example.sentence);
 
   $("#detail").innerHTML = `
     <div class="hero">
-      <div class="bigkanji">
-        ${renderFurigana(item.character, item.characterFurigana)}
-      </div>
+      <div class="bigkanji">${renderFurigana(
+        item.character,
+        item.characterFurigana
+      )}</div>
       <div>
         <h2>${escapeHTML(item.character)}</h2>
         <div>${displayTranslation(item.meanings.pl, item.meanings.en)}</div>
@@ -347,16 +373,17 @@ function renderDetail(character) {
       <h3>Odczyty</h3>
       <p><b>On’yomi:</b> ${escapeHTML(item.onyomi.join("、") || "—")}</p>
       <p><b>Kun’yomi:</b> ${escapeHTML(item.kunyomi.join("、") || "—")}</p>
+      <div class="actions">
+        <button type="button" id="editSelected" class="button">Edytuj kanji</button>
+        <button type="button" id="listenFirstSentence" class="button secondary">
+          Odsłuchaj zdanie
+        </button>
+      </div>
     </div>
 
     <div class="example">
       <h3>Słowa i zdania (${item.examples.length})</h3>
-      ${examplesHTML}
-    </div>
-
-    <div class="actions">
-      <button type="button" id="editSelected" class="button">Edytuj kanji</button>
-      <button type="button" id="listenKanji" class="button secondary">Odsłuchaj kanji</button>
+      ${examplesHTML || '<p class="muted">Nie dodano jeszcze przykładów.</p>'}
     </div>
 
     <section class="practice-tools">
@@ -365,18 +392,40 @@ function renderDetail(character) {
       <canvas id="writingCanvas" width="640" height="440"></canvas>
       <div class="actions">
         <button type="button" id="clearCanvas" class="button secondary">Wyczyść</button>
-        <button type="button" id="showKanji" class="button secondary">Pokaż znak</button>
-        <button type="button" id="listenSentence" class="button secondary">Odsłuchaj zdanie</button>
-        <button type="button" id="checkPronunciation" class="button secondary">
-          Sprawdź wymowę
-        </button>
+        <button type="button" id="showKanji" class="button secondary">Pokaż wzór pisma</button>
       </div>
       <p id="practiceMessage" class="status" aria-live="polite"></p>
     </section>
   `;
 
   $("#editSelected").addEventListener("click", () => openEditor(character));
-  $("#listenKanji").addEventListener("click", () => speakJapanese(item.character));
+
+  $("#listenFirstSentence").addEventListener("click", () => {
+    if (firstSentence) {
+      speakJapanese(firstSentence.sentence, $("#practiceMessage"));
+    } else {
+      $("#practiceMessage").textContent =
+        "Do tego kanji nie dodano jeszcze zdania.";
+    }
+  });
+
+  $$("[data-listen-sentence]").forEach(button => {
+    button.addEventListener("click", () => {
+      const example = item.examples[Number(button.dataset.listenSentence)];
+      if (example?.sentence) {
+        speakJapanese(example.sentence, $(`#sentenceStatus${button.dataset.listenSentence}`));
+      }
+    });
+  });
+
+  $$("[data-check-sentence]").forEach(button => {
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.checkSentence);
+      const example = item.examples[index];
+      if (example) checkSentencePronunciation(example, index);
+    });
+  });
+
   setupPracticeTools(item);
 }
 
@@ -393,8 +442,8 @@ function setupPracticeTools(item) {
   function canvasPoint(event) {
     const rect = canvas.getBoundingClientRect();
     return {
-      x: (event.clientX - rect.left) * (canvas.width / rect.width),
-      y: (event.clientY - rect.top) * (canvas.height / rect.height)
+      x: (event.clientX - rect.left) * canvas.width / rect.width,
+      y: (event.clientY - rect.top) * canvas.height / rect.height
     };
   }
 
@@ -427,57 +476,58 @@ function setupPracticeTools(item) {
     $("#practiceMessage").textContent = "";
   });
 
-  $("#showKanji").addEventListener("click", () => {
+  $("#showKanji").addEventListener("click", async () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = "#e8e1d9";
-    context.font = '280px "Klee One", "Hiragino Sans", "Yu Gothic", sans-serif';
+
+    if (document.fonts?.load) {
+      try {
+        await document.fonts.load('280px "Klee One"');
+      } catch {
+        // W razie braku internetu użyty zostanie font zastępczy.
+      }
+    }
+
+    context.save();
+    context.fillStyle = "#ded8d0";
+    context.font =
+      '280px "Klee One", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif';
     context.textAlign = "center";
     context.textBaseline = "middle";
     context.fillText(item.character, canvas.width / 2, canvas.height / 2);
-  });
-
-  $("#listenSentence").addEventListener("click", () => {
-    const sentence = item.examples.find(example => example.sentence)?.sentence;
-    if (sentence) {
-      speakJapanese(sentence);
-    } else {
-      $("#practiceMessage").textContent = "Nie dodano zdania do tego kanji.";
-    }
-  });
-
-  $("#checkPronunciation").addEventListener("click", () => {
-    checkPronunciation(item);
+    context.restore();
   });
 }
 
-function speakJapanese(text) {
+function speakJapanese(text, statusElement) {
   if (!("speechSynthesis" in window)) {
-    $("#practiceMessage").textContent = "Synteza mowy nie jest dostępna w tej przeglądarce.";
+    if (statusElement) {
+      statusElement.textContent =
+        "Synteza mowy nie jest dostępna w tej przeglądarce.";
+    }
     return;
   }
 
   speechSynthesis.cancel();
+
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "ja-JP";
   speechSynthesis.speak(utterance);
 }
 
-function checkPronunciation(item) {
-  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+function normalizeSpeechText(text) {
+  return String(text || "")
+    .normalize("NFC")
+    .replace(/[\s。、！？,.!?「」『』（）()]/g, "");
+}
+
+function checkSentencePronunciation(example, index) {
+  const Recognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+  const status = $(`#sentenceStatus${index}`);
 
   if (!Recognition) {
-    $("#practiceMessage").textContent =
-      "Rozpoznawanie mowy nie jest obsługiwane przez tę przeglądarkę.";
-    return;
-  }
-
-  const firstReading = item.characterFurigana.find(
-    part => isKanji(part.text) && part.reading
-  )?.reading;
-
-  if (!firstReading) {
-    $("#practiceMessage").textContent =
-      "Dodaj furiganę do kanji, aby sprawdzić jego wymowę.";
+    status.textContent =
+      "Ta przeglądarka nie obsługuje rozpoznawania mowy. Spróbuj w Chrome.";
     return;
   }
 
@@ -486,32 +536,35 @@ function checkPronunciation(item) {
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
-  $("#practiceMessage").textContent =
-    `Słucham — wypowiedz odczyt pierwszego kanji: ${firstReading}`;
+  status.textContent = "Słucham przez mikrofon — przeczytaj zdanie na głos.";
 
   recognition.onresult = event => {
     const heard = event.results[0][0].transcript || "";
-    const clean = value =>
-      value.replace(/[\s。、！？,.!?]/g, "").normalize("NFC");
+    const matches =
+      normalizeSpeechText(heard) === normalizeSpeechText(example.sentence);
 
-    $("#practiceMessage").textContent = clean(heard) === clean(firstReading)
-      ? `Rozpoznano „${heard}” — zgodne z wpisaną furiganą.`
-      : `Rozpoznano „${heard}”. Oczekiwano „${firstReading}”.`;
+    status.textContent = matches
+      ? `Rozpoznano „${heard}” — transkrypcja zgadza się ze zdaniem.`
+      : `Rozpoznano „${heard}”. Porównaj transkrypcję z: ${example.sentence}`;
   };
 
   recognition.onerror = event => {
-    $("#practiceMessage").textContent =
-      `Błąd rozpoznawania mowy: ${event.error}. Sprawdź mikrofon i uprawnienia.`;
+    status.textContent =
+      `Nie udało się rozpoznać mowy (${event.error}). Sprawdź mikrofon i uprawnienia.`;
   };
 
   recognition.onend = () => {
-    if ($("#practiceMessage").textContent.startsWith("Słucham")) {
-      $("#practiceMessage").textContent =
-        "Nie rozpoznano wypowiedzi. Spróbuj ponownie.";
+    if (status.textContent.startsWith("Słucham")) {
+      status.textContent = "Nie rozpoznano wypowiedzi. Spróbuj ponownie.";
     }
   };
 
-  recognition.start();
+  try {
+    recognition.start();
+  } catch {
+    status.textContent =
+      "Nie można uruchomić mikrofonu. Sprawdź uprawnienia przeglądarki.";
+  }
 }
 
 function renderDaily() {
@@ -529,18 +582,18 @@ function renderDaily() {
     return;
   }
 
-  const today = new Date();
+  const now = new Date();
   const dateKey = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0")
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0")
   ].join("-");
 
   const filterKey = `${$("#level").value}|${$("#grade").value}`;
   let seed = 0;
 
-  for (const char of `${dateKey}|${filterKey}`) {
-    seed = (seed * 31 + char.charCodeAt(0)) >>> 0;
+  for (const character of `${dateKey}|${filterKey}`) {
+    seed = (seed * 31 + character.charCodeAt(0)) >>> 0;
   }
 
   const item = pool[seed % pool.length];
@@ -549,9 +602,10 @@ function renderDaily() {
 
   $("#dailyContent").innerHTML = `
     <div class="daily-content">
-      <div class="daily-kanji">
-        ${renderFurigana(item.character, item.characterFurigana)}
-      </div>
+      <div class="daily-kanji">${renderFurigana(
+        item.character,
+        item.characterFurigana
+      )}</div>
       <div>
         <h3>${displayTranslation(item.meanings.pl, item.meanings.en)}</h3>
         <div class="actions">
@@ -579,29 +633,30 @@ function renderDaily() {
   });
 }
 
-function renderFuriganaEditor(container, text, sourceSegments) {
+function renderFuriganaEditor(container, text, sourceSegments = []) {
   const characters = textCharacters(text);
   const segments = normalizeFurigana(text, sourceSegments);
   container.replaceChildren();
 
-  const kanjiPositions = characters
+  const positions = characters
     .map((character, index) => isKanji(character) ? index : -1)
     .filter(index => index >= 0);
 
-  if (!kanjiPositions.length) {
-    container.innerHTML =
-      '<p class="furigana-hint muted">Wpisz tekst zawierający kanji, aby dodać furiganę.</p>';
+  if (!positions.length) {
+    const hint = document.createElement("p");
+    hint.className = "furigana-hint muted";
+    hint.textContent = "Wpisz tekst zawierający kanji, aby dodać furiganę.";
+    container.appendChild(hint);
     return;
   }
 
-  for (const index of kanjiPositions) {
-    const character = characters[index];
+  positions.forEach(index => {
     const wrapper = document.createElement("label");
     wrapper.className = "furigana-item";
 
     const characterLabel = document.createElement("span");
     characterLabel.className = "kanji-label";
-    characterLabel.textContent = character;
+    characterLabel.textContent = characters[index];
 
     const input = document.createElement("input");
     input.type = "text";
@@ -609,15 +664,19 @@ function renderFuriganaEditor(container, text, sourceSegments) {
     input.placeholder = "odczyt";
     input.value = segments[index]?.reading || "";
     input.dataset.index = String(index);
-    input.setAttribute("aria-label", `Furigana dla znaku ${character}`);
+    input.setAttribute(
+      "aria-label",
+      `Furigana dla znaku ${characters[index]}`
+    );
 
     wrapper.append(characterLabel, input);
     container.appendChild(wrapper);
-  }
+  });
 
   const hint = document.createElement("p");
   hint.className = "furigana-hint muted";
-  hint.textContent = "Wpisz odczyt nad każdym kanji osobno. Kana nie ma pola furigany.";
+  hint.textContent =
+    "Wpisz odczyt osobno przy każdym kanji. Kana nie ma pola furigany.";
   container.appendChild(hint);
 }
 
@@ -630,6 +689,7 @@ function collectFurigana(text, container) {
 
   container.querySelectorAll("input[data-index]").forEach(input => {
     const index = Number(input.dataset.index);
+
     if (result[index] && isKanji(result[index].text)) {
       result[index].reading = input.value.trim();
     }
@@ -648,33 +708,41 @@ function addExampleEditor(example = {}) {
         <input data-field="word" value="${escapeHTML(example.word || "")}">
       </label>
       <label>Znaczenie słowa — polski
-        <input data-field="wordPL" value="${escapeHTML(example.wordMeaning?.pl || "")}">
+        <input data-field="wordPL"
+          value="${escapeHTML(example.wordMeaning?.pl || "")}">
       </label>
       <label>Znaczenie słowa — angielski
-        <input data-field="wordEN" value="${escapeHTML(example.wordMeaning?.en || "")}">
+        <input data-field="wordEN"
+          value="${escapeHTML(example.wordMeaning?.en || "")}">
       </label>
       <label>Zdanie po japońsku
         <textarea data-field="sentence">${escapeHTML(example.sentence || "")}</textarea>
       </label>
       <label>Znaczenie zdania — polski
-        <textarea data-field="sentencePL">${escapeHTML(example.sentenceMeaning?.pl || "")}</textarea>
+        <textarea data-field="sentencePL">${escapeHTML(
+          example.sentenceMeaning?.pl || ""
+        )}</textarea>
       </label>
       <label>Znaczenie zdania — angielski
-        <textarea data-field="sentenceEN">${escapeHTML(example.sentenceMeaning?.en || "")}</textarea>
+        <textarea data-field="sentenceEN">${escapeHTML(
+          example.sentenceMeaning?.en || ""
+        )}</textarea>
       </label>
     </div>
 
     <section class="furigana-section">
-      <h3>Furigana słowa — osobno dla każdego kanji</h3>
+      <h3>Furigana słowa — osobno przy każdym kanji</h3>
       <div class="furigana-editor" data-furigana="word"></div>
     </section>
 
     <section class="furigana-section">
-      <h3>Furigana zdania — osobno dla każdego kanji</h3>
+      <h3>Furigana zdania — osobno przy każdym kanji</h3>
       <div class="furigana-editor" data-furigana="sentence"></div>
     </section>
 
-    <button type="button" class="button secondary remove-example">Usuń przykład</button>
+    <button type="button" class="button secondary remove-example">
+      Usuń przykład
+    </button>
   `;
 
   const wordInput = row.querySelector('[data-field="word"]');
@@ -690,11 +758,13 @@ function addExampleEditor(example = {}) {
   );
 
   wordInput.addEventListener("input", () => {
-    renderFuriganaEditor(wordEditor, wordInput.value, []);
+    const oldSegments = collectFurigana(wordInput.value, wordEditor);
+    renderFuriganaEditor(wordEditor, wordInput.value, oldSegments);
   });
 
   sentenceInput.addEventListener("input", () => {
-    renderFuriganaEditor(sentenceEditor, sentenceInput.value, []);
+    const oldSegments = collectFurigana(sentenceInput.value, sentenceEditor);
+    renderFuriganaEditor(sentenceEditor, sentenceInput.value, oldSegments);
   });
 
   row.querySelector(".remove-example").addEventListener("click", () => row.remove());
@@ -718,23 +788,39 @@ function openEditor(character = "") {
   $("#onyomiInput").value = (item?.onyomi || []).join(", ");
   $("#kunyomiInput").value = (item?.kunyomi || []).join(", ");
 
+  const characterEditor = $("#characterFuriganaEditor");
   renderFuriganaEditor(
-    $("#characterFuriganaEditor"),
+    characterEditor,
     item?.character || "",
     item?.characterFurigana || []
   );
 
   $("#character").oninput = () => {
-    renderFuriganaEditor(
-      $("#characterFuriganaEditor"),
+    const oldSegments = collectFurigana(
       $("#character").value,
-      []
+      characterEditor
+    );
+    renderFuriganaEditor(
+      characterEditor,
+      $("#character").value,
+      oldSegments
     );
   };
 
   const knownFields = new Set([
-    "character", "characterFurigana", "grade", "schoolStage", "jlpt",
-    "level", "strokes", "meanings", "onyomi", "kunyomi", "examples", "words"
+    "character",
+    "characterFurigana",
+    "characterReading",
+    "grade",
+    "schoolStage",
+    "jlpt",
+    "level",
+    "strokes",
+    "meanings",
+    "onyomi",
+    "kunyomi",
+    "examples",
+    "words"
   ]);
 
   const extras = Object.fromEntries(
@@ -785,8 +871,8 @@ function saveEditor(event) {
 
   const examples = 
 $$(".example-editor").map(row => {
-    const get = name =>
-      row.querySelector(`[data-field="${name}"]`).value.trim();
+    const get = field =>
+      row.querySelector(`[data-field="${field}"]`).value.trim();
 
     const word = get("word");
     const sentence = get("sentence");
@@ -812,9 +898,12 @@ $$(".example-editor").map(row => {
       }
     };
   }).filter(example =>
-    example.word || example.sentence ||
-    example.wordMeaning.pl || example.wordMeaning.en ||
-    example.sentenceMeaning.pl || example.sentenceMeaning.en
+    example.word ||
+    example.sentence ||
+    example.wordMeaning.pl ||
+    example.wordMeaning.en ||
+    example.sentenceMeaning.pl ||
+    example.sentenceMeaning.en
   );
 
   const originalCharacter = $("#originalCharacter").value;
@@ -947,8 +1036,6 @@ function startQuiz() {
   }
 
   const question = pool[Math.floor(Math.random() * pool.length)];
-  const answer = question.meanings.pl || question.meanings.en;
-
   const choices = [
     question,
     ...pool
@@ -959,13 +1046,15 @@ function startQuiz() {
 
   $("#quizContent").innerHTML = `
     <p>Wybierz znaczenie znaku:</p>
-    <div class="bigkanji">
-      ${renderFurigana(question.character, question.characterFurigana)}
-    </div>
+    <div class="bigkanji">${renderFurigana(
+      question.character,
+      question.characterFurigana
+    )}</div>
     <div class="quiz-choices">
       ${choices.map(item => `
         <button class="button quiz-choice"
-          data-answer="${escapeHTML(item.character)}" type="button">
+          data-answer="${escapeHTML(item.character)}"
+          type="button">
           ${displayTranslation(item.meanings.pl, item.meanings.en)}
         </button>
       `).join("")}
@@ -975,10 +1064,11 @@ function startQuiz() {
 
   $$("#quizContent [data-answer]").forEach(button => {
     button.addEventListener("click", () => {
-      $("#quizFeedback").textContent =
-        button.dataset.answer === question.character
-          ? "Dobrze!"
-          : `Spróbuj ponownie. Poprawna odpowiedź: ${answer}`;
+      const correct = button.dataset.answer === question.character;
+
+      $("#quizFeedback").textContent = correct
+        ? "Dobrze!"
+        : `Nie tym razem. Poprawne kanji: ${question.character}`;
     });
   });
 }
@@ -988,6 +1078,7 @@ $("#addExample").addEventListener("click", () => addExampleEditor());
 $("#newEntry").addEventListener("click", () => openEditor(""));
 $("#startQuiz").addEventListener("click", startQuiz);
 $("#exportFile").addEventListener("click", () => exportJSON(true));
+
 $("#importFile").addEventListener("change", event => {
   importJSON(event.target.files?.[0]);
 });

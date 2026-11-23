@@ -27,17 +27,30 @@ button, input, select, textarea { font: inherit; }
 .site-header {
   background: #282e34;
   color: #fff;
-  padding: 20px max(16px, calc((100vw - 1120px) / 2));
+  padding: 18px max(16px, calc((100vw - 1120px) / 2));
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
 .site-header h1 { margin: 0; font-size: 23px; }
 .site-header p { margin: 3px 0 0; color: #d6dce0; font-size: 13px; }
 
+.header-tools {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+  flex: 1 1 500px;
+}
+
+.header-status {
+  color: #e3e8eb;
+  font-size: 13px;
+}
+
+.excel-controls,
 .header-actions,
 .tabs,
 .button-row,
@@ -48,9 +61,15 @@ button, input, select, textarea { font: inherit; }
   gap: 8px;
 }
 
-.header-status {
+.import-mode-label {
   color: #e3e8eb;
   font-size: 13px;
+}
+
+.excel-controls select {
+  width: auto;
+  min-width: 170px;
+  min-height: 44px;
 }
 
 main {
@@ -123,7 +142,6 @@ textarea { min-height: 76px; resize: vertical; }
 
 .extra-label { margin-top: 12px; }
 .examples-title { margin-top: 20px; }
-.import-controls { margin-top: 14px; }
 
 .columns {
   display: grid;
@@ -169,7 +187,8 @@ textarea { min-height: 76px; resize: vertical; }
 .example-ja,
 .japanese-text,
 ruby,
-.furigana-item .kanji-label {
+.furigana-item .kanji-label,
+.flashcard-kanji {
   font-family: var(--font-ja);
 }
 
@@ -319,6 +338,16 @@ rt {
   font-size: 13px;
 }
 
+.inline-sentence-editor {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fcfbf9;
+}
+
 .notice {
   background: #fff6df;
   border: 1px solid #f0dda9;
@@ -341,6 +370,157 @@ rt {
   border-radius: 12px;
   background: #fff;
   touch-action: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Fiszki */
+.flashcard-panel {
+  max-width: 760px;
+  margin: 0 auto 18px;
+}
+
+.flashcard-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.mastered-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.mastered-filter input {
+  width: 20px;
+  min-height: 20px;
+}
+
+.flashcard-progress {
+  text-align: center;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.flashcard {
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 14px 0;
+  padding: clamp(18px, 5vw, 36px);
+  border: 2px solid var(--line);
+  border-radius: 22px;
+  background: linear-gradient(145deg, #fff, #faf7f2);
+  box-shadow: 0 10px 30px #252b3210;
+  overflow-wrap: anywhere;
+}
+
+.flashcard-front {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
+}
+
+.flashcard-label {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: .14em;
+}
+
+.flashcard-kanji {
+  font-size: clamp(112px, 30vw, 190px);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.flashcard-prompt {
+  max-width: 34rem;
+  margin: 14px auto 0;
+  color: var(--muted);
+  font-size: clamp(15px, 4vw, 18px);
+}
+
+.flashcard-back {
+  width: 100%;
+  font-size: clamp(16px, 4vw, 19px);
+}
+
+.flashcard-back h3 {
+  margin: 18px 0 6px;
+  color: var(--green);
+}
+
+.flashcard-back p {
+  margin: 7px 0;
+}
+
+.flashcard-answer-kanji {
+  text-align: center;
+  font-size: clamp(48px, 14vw, 76px);
+  line-height: 1.8;
+}
+
+.flashcard-examples {
+  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  padding-top: 8px;
+}
+
+.flashcard-example {
+  border-bottom: 1px solid var(--line);
+  padding: 8px 0;
+}
+
+.flashcard-actions,
+.flashcard-secondary-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1fr;
+  gap: 8px;
+}
+
+.flashcard-secondary-actions {
+  grid-template-columns: 1fr 1fr;
+  margin-top: 8px;
+}
+
+.flashcard-actions .button,
+.flashcard-secondary-actions .button {
+  min-height: 50px;
+}
+
+.flashcard-actions .button {
+  font-size: 15px;
+}
+
+.flashcard-message {
+  text-align: center;
+  min-height: 1.5em;
+}
+
+.flashcard-empty {
+  padding: 36px 12px;
+  text-align: center;
+  color: var(--muted);
 }
 
 .quiz-choice {
@@ -385,17 +565,29 @@ footer {
   .site-header { padding: 14px 16px; }
   .site-header h1 { font-size: 20px; }
 
-  .header-actions {
+  .header-tools {
     width: 100%;
+    justify-items: stretch;
+  }
+
+  .excel-controls,
+  .header-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
   }
 
-  .header-status { grid-column: 1 / -1; }
-  .header-actions button {
+  .import-mode-label {
+    grid-column: 1 / -1;
+  }
+
+  .excel-controls select {
+    grid-column: 1 / -1;
     width: 100%;
-    padding: 9px 8px;
-    font-size: 14px;
+  }
+
+  .header-actions button,
+  .excel-controls button {
+    width: 100%;
   }
 
   main { margin: 14px auto 40px; padding: 0 12px; }
@@ -441,6 +633,45 @@ footer {
     grid-template-columns: 1fr;
   }
 
+  .flashcard-panel {
+    padding: 12px;
+  }
+
+  .flashcard {
+    min-height: 56vh;
+    min-height: 56svh;
+    padding: 20px 14px;
+    border-radius: 18px;
+  }
+
+  .flashcard-front {
+    min-height: 46vh;
+    min-height: 46svh;
+  }
+
+  .flashcard-kanji {
+    font-size: clamp(120px, 38vw, 190px);
+  }
+
+  .flashcard-back {
+    font-size: 17px;
+    line-height: 1.65;
+  }
+
+  .flashcard-actions {
+    grid-template-columns: 1fr 1.15fr 1fr;
+    gap: 6px;
+  }
+
+  .flashcard-actions .button {
+    padding: 9px 5px;
+    font-size: 13px;
+  }
+
+  .flashcard-secondary-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
   footer { padding: 0 12px 20px; }
 }
 
@@ -451,6 +682,15 @@ footer {
   .hero { flex-direction: column; }
   .daily-content { align-items: flex-start; }
   .daily-kanji { font-size: 46px; }
+
+  .flashcard-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #revealFlashcard {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

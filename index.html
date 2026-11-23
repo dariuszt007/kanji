@@ -14,55 +14,59 @@
   >
 
   <link rel="stylesheet" href="./style.css">
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="./app.js" defer></script>
+
+  <!-- Excel działa, gdy biblioteka XLSX jest dostępna online. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script defer src="./app.js"></script>
 </head>
 <body>
   <header class="site-header">
-    <div>
+    <div class="brand">
       <h1>Kanji Path</h1>
-      <p>Kanji i japońskie słownictwo — ucz się we własnym tempie</p>
+      <p>Japoński w małych, codziennych porcjach</p>
     </div>
 
-    <div class="header-tools">
-      <span id="status" class="header-status">Wczytuję data.json…</span>
-
-      <div class="excel-controls">
-        <label class="import-mode-label" for="importMode">Tryb importu Excel</label>
-        <select id="importMode" aria-label="Tryb importu Excela">
+    <details class="data-menu">
+      <summary>Dane i kopie zapasowe</summary>
+      <div class="data-menu-content">
+        <label for="importMode">Tryb importu Excela</label>
+        <select id="importMode">
           <option value="merge">Scal z obecną bazą</option>
           <option value="replace">Zastąp całą bazę</option>
         </select>
 
-        <input
-          id="excelFile"
-          class="visually-hidden"
-          type="file"
-          accept=".xlsx,.xls"
-        >
-        <button id="importExcel" class="button secondary" type="button">
-          Import Excel
-        </button>
-        <button id="exportExcel" class="button" type="button">
-          Eksport Excel
-        </button>
-      </div>
+        <div class="toolbar-buttons">
+          <button id="importExcel" class="button secondary" type="button">
+            Import Excel
+          </button>
+          <button id="exportExcel" class="button" type="button">
+            Eksport Excel
+          </button>
+          <button id="importJson" class="button secondary" type="button">
+            Import JSON
+          </button>
+          <button id="exportJson" class="button secondary" type="button">
+            Pobierz JSON
+          </button>
+          <button id="copyJson" class="button secondary" type="button">
+            Kopiuj JSON
+          </button>
+          <button id="refresh" class="button secondary" type="button">
+            Wczytaj ponownie data.json
+          </button>
+        </div>
 
-      <div class="header-actions">
-        <button id="refresh" class="button secondary" type="button">
-          Odśwież z JSON
-        </button>
-        <button id="copyJson" class="button secondary" type="button">
-          Kopiuj JSON
-        </button>
+        <input id="excelFile" class="visually-hidden" type="file" accept=".xlsx,.xls">
+        <input id="jsonFile" class="visually-hidden" type="file" accept=".json,application/json">
       </div>
+    </details>
 
-      <span id="dataMessage" class="header-status" aria-live="polite"></span>
-    </div>
+    <p id="status" class="header-status" role="status">Uruchamiam aplikację…</p>
+    <p id="dataMessage" class="data-message" aria-live="polite"></p>
   </header>
 
   <main>
-    <nav class="tabs" aria-label="Główna nawigacja">
+    <nav class="tabs" aria-label="Menu aplikacji">
       <button class="tab active" data-tab="learn" type="button">Nauka</button>
       <button class="tab" data-tab="add" type="button">Dodaj kanji</button>
       <button class="tab" data-tab="flashcards" type="button">Fiszki</button>
@@ -71,20 +75,21 @@
 
     <section id="learn" class="view">
       <article class="panel daily">
-        <span class="tag">CODZIENNA LEKCJA</span>
-        <h2>Kanji dnia</h2>
+        <span class="tag">KANJI DNIA</span>
         <p id="dailyDate" class="muted"></p>
-        <div id="dailyContent"></div>
+        <div id="dailyContent">
+          <p class="muted">Ładowanie kanji…</p>
+        </div>
       </article>
 
-      <section class="panel filters" aria-label="Filtry kanji">
-        <label>
+      <section class="panel filters" aria-label="Filtry">
+        <label class="search-label">
           Szukaj kanji, słowa lub tłumaczenia
-          <input id="search" placeholder="np. 日, dzień, sun">
+          <input id="search" type="search" placeholder="np. 日, dzień, sun">
         </label>
 
         <label>
-          Poziom JLPT
+          JLPT
           <select id="level">
             <option value="all">Wszystkie</option>
             <option>N5</option>
@@ -96,7 +101,7 @@
         </label>
 
         <label>
-          Klasa podstawowa
+          Klasa
           <select id="grade">
             <option value="all">Wszystkie</option>
             <option value="1">Klasa 1</option>
@@ -108,7 +113,9 @@
           </select>
         </label>
 
-        <button id="clear" class="button secondary" type="button">Wyczyść</button>
+        <button id="clearFilters" class="button secondary" type="button">
+          Wyczyść filtry
+        </button>
       </section>
 
       <div class="columns">
@@ -122,7 +129,7 @@
         </section>
 
         <section id="detail" class="panel detail" aria-live="polite">
-          <p class="muted">Wybierz znak z listy.</p>
+          <p class="muted">Wybierz kanji z listy.</p>
         </section>
       </div>
     </section>
@@ -131,34 +138,29 @@
       <section class="panel">
         <h2>Dodaj nowe kanji</h2>
         <p class="muted">
-          Ten formularz dodaje nowy znak do lokalnej bazy. Nie służy do edycji
-          istniejących kanji.
+          Formularz dodaje nowy znak. Istniejące wpisy nie są tu edytowane.
         </p>
 
         <form id="kanjiForm">
           <div class="form-grid">
-            <label>
-              Kanji *
+            <label>Kanji *
               <input id="character" required placeholder="日">
             </label>
 
-            <label>
-              Klasa podstawowa (1–6)
+            <label>Klasa podstawowa
               <input id="gradeInput" type="number" min="1" max="6">
             </label>
 
-            <label>
-              Etap szkoły
+            <label>Etap szkoły
               <select id="stageInput">
                 <option value="">Nieokreślony</option>
                 <option value="小学校">Szkoła podstawowa</option>
-                <option value="中学校">Junior high — klasa nieokreślona</option>
+                <option value="中学校">Junior high</option>
                 <option value="高等学校">High school</option>
               </select>
             </label>
 
-            <label>
-              JLPT — poziom przybliżony
+            <label>Poziom JLPT
               <select id="jlptInput">
                 <option value="">Nieprzypisany</option>
                 <option>N5</option>
@@ -169,51 +171,39 @@
               </select>
             </label>
 
-            <label>
-              Liczba kresek
+            <label>Liczba kresek
               <input id="strokesInput" type="number" min="1">
             </label>
 
-            <label>
-              Znaczenie po polsku
+            <label>Znaczenie po polsku
               <input id="meaningPL" placeholder="np. słońce; dzień">
             </label>
 
-            <label>
-              Znaczenie po angielsku
+            <label>Znaczenie po angielsku
               <input id="meaningEN" placeholder="e.g. sun; day">
             </label>
 
-            <label>
-              On’yomi — oddziel przecinkami
+            <label>On’yomi — oddziel przecinkami
               <input id="onyomiInput" placeholder="ニチ, ジツ">
             </label>
 
-            <label>
-              Kun’yomi — oddziel przecinkami
+            <label>Kun’yomi — oddziel przecinkami
               <input id="kunyomiInput" placeholder="ひ, か">
             </label>
           </div>
 
           <section class="furigana-section">
-            <h3>Furigana nowego kanji</h3>
-            <p class="muted">
-              Wpisz odczyt osobno przy każdym kanji. Kana i interpunkcja nie
-              otrzymują furigany.
-            </p>
+            <h3>Furigana kanji</h3>
+            <p class="muted">Każde kanji ma osobne pole furigany.</p>
             <div id="characterFuriganaEditor" class="furigana-editor"></div>
           </section>
 
-          <label class="extra-label">
-            Pozostałe pola rekordu JSON
-            <textarea
-              id="extraFields"
-              spellcheck="false"
-              placeholder='{"radical":"日","notes":"własna notatka"}'
-            ></textarea>
+          <label class="extra-label">Dodatkowe pola JSON (opcjonalnie)
+            <textarea id="extraFields" spellcheck="false"
+              placeholder='{"radical":"日","notes":"notatka"}'></textarea>
           </label>
 
-          <h3 class="examples-title">Przykładowe słowa i zdania</h3>
+          <h3 class="examples-title">Słowa i zdania</h3>
           <div id="examples"></div>
 
           <button id="addExample" class="button secondary" type="button">
@@ -234,8 +224,8 @@
       <section class="panel flashcard-panel">
         <div class="flashcard-heading">
           <div>
-            <h2>Fiszki kanji</h2>
-            <p class="muted">Najpierw przypomnij sobie znaczenie, potem odkryj odpowiedź.</p>
+            <h2>Fiszki</h2>
+            <p class="muted">Przypomnij sobie odpowiedź, a potem odkryj rewers.</p>
           </div>
           <label class="mastered-filter">
             <input id="hideMastered" type="checkbox">
@@ -246,12 +236,7 @@
         <p id="flashcardProgress" class="flashcard-progress"></p>
 
         <article id="flashcard" class="flashcard" aria-live="polite">
-          <div id="flashcardFront" class="flashcard-front">
-            <p class="flashcard-label">KANJI</p>
-            <div id="flashcardKanji" class="flashcard-kanji"></div>
-            <p class="flashcard-prompt">Spróbuj przypomnieć sobie odczyt i znaczenie.</p>
-          </div>
-          <div id="flashcardBack" class="flashcard-back hidden"></div>
+          <p class="muted">Wczytywanie fiszek…</p>
         </article>
 
         <div class="flashcard-actions">
@@ -283,8 +268,7 @@
       <section class="panel">
         <h2>Ustawienia</h2>
 
-        <label class="language-setting">
-          Język tłumaczeń
+        <label class="language-setting">Język tłumaczeń
           <select id="language">
             <option value="pl">Polski</option>
             <option value="en">English</option>
@@ -293,17 +277,16 @@
         </label>
 
         <p class="notice">
-          Jeśli polskie tłumaczenie jest puste, przy ustawieniu polskiego
-          wyświetli się angielskie. Poziom JLPT jest oznaczeniem przybliżonym.
+          Poziom JLPT jest oznaczeniem przybliżonym. Dane są zapisywane lokalnie
+          w tej przeglądarce.
         </p>
       </section>
     </section>
   </main>
 
   <footer>
-    Kanji używają Klee One, jeśli font jest dostępny; w przeciwnym razie
-    przeglądarka użyje fontu systemowego. Rozpoznawanie mowy zależy od
-    przeglądarki i uprawnień mikrofonu.
+    Klee One i import/eksport Excel wymagają internetu. Rozpoznawanie mowy
+    wymaga obsługującej je przeglądarki i dostępu do mikrofonu.
   </footer>
 </body>
 </html>

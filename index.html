@@ -4,7 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#282e34">
-  <title>Kanji Path</title>
+  <title>Kanji Path — nauka kanji</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="./style.css">
   <script src="./app.js" defer></script>
 </head>
@@ -15,7 +20,7 @@
       <p>Kanji i japońskie słownictwo — ucz się we własnym tempie</p>
     </div>
     <div class="header-actions">
-      <span id="status" class="status">Wczytuję data.json…</span>
+      <span id="status" class="header-status">Wczytuję data.json…</span>
       <button id="refresh" class="button secondary" type="button">Odśwież z JSON</button>
       <button id="copyJson" class="button" type="button">Kopiuj JSON</button>
     </div>
@@ -44,16 +49,22 @@
         <label>Poziom JLPT
           <select id="level">
             <option value="all">Wszystkie</option>
-            <option>N5</option><option>N4</option><option>N3</option>
-            <option>N2</option><option>N1</option>
+            <option>N5</option>
+            <option>N4</option>
+            <option>N3</option>
+            <option>N2</option>
+            <option>N1</option>
           </select>
         </label>
         <label>Klasa podstawowa
           <select id="grade">
             <option value="all">Wszystkie</option>
-            <option value="1">Klasa 1</option><option value="2">Klasa 2</option>
-            <option value="3">Klasa 3</option><option value="4">Klasa 4</option>
-            <option value="5">Klasa 5</option><option value="6">Klasa 6</option>
+            <option value="1">Klasa 1</option>
+            <option value="2">Klasa 2</option>
+            <option value="3">Klasa 3</option>
+            <option value="4">Klasa 4</option>
+            <option value="5">Klasa 5</option>
+            <option value="6">Klasa 6</option>
           </select>
         </label>
         <button id="clear" class="button secondary" type="button">Wyczyść</button>
@@ -68,6 +79,7 @@
           <div id="cards" class="cards"></div>
           <p id="listHint" class="muted"></p>
         </section>
+
         <section id="detail" class="panel detail" aria-live="polite">
           <p class="muted">Wybierz znak z listy.</p>
         </section>
@@ -87,10 +99,7 @@
 
           <div class="form-grid">
             <label>Kanji *
-              <input id="character" required maxlength="2" placeholder="日">
-            </label>
-            <label>Furigana kanji
-              <input id="characterReading" placeholder="ひ / ニチ">
+              <input id="character" required placeholder="日">
             </label>
             <label>Klasa podstawowa (1–6)
               <input id="gradeInput" type="number" min="1" max="6">
@@ -106,8 +115,11 @@
             <label>JLPT — poziom przybliżony
               <select id="jlptInput">
                 <option value="">Nieprzypisany</option>
-                <option>N5</option><option>N4</option><option>N3</option>
-                <option>N2</option><option>N1</option>
+                <option>N5</option>
+                <option>N4</option>
+                <option>N3</option>
+                <option>N2</option>
+                <option>N1</option>
               </select>
             </label>
             <label>Liczba kresek
@@ -119,13 +131,22 @@
             <label>Znaczenie po angielsku
               <input id="meaningEN" placeholder="e.g. sun; day">
             </label>
-            <label>On’yomi — rozdziel przecinkami
+            <label>On’yomi — oddziel przecinkami
               <input id="onyomiInput" placeholder="ニチ, ジツ">
             </label>
-            <label>Kun’yomi — rozdziel przecinkami
+            <label>Kun’yomi — oddziel przecinkami
               <input id="kunyomiInput" placeholder="ひ, か">
             </label>
           </div>
+
+          <section class="furigana-section">
+            <h3>Furigana kanji</h3>
+            <p class="muted">
+              Każdy znak kanji ma własne pole. Furigana nie jest przypisywana
+              do całego słowa ani zdania.
+            </p>
+            <div id="characterFuriganaEditor" class="furigana-editor"></div>
+          </section>
 
           <label class="extra-label">Pozostałe pola rekordu JSON
             <textarea id="extraFields" spellcheck="false"
@@ -134,6 +155,7 @@
 
           <h3 class="examples-title">Słowa i zdania</h3>
           <div id="examples"></div>
+
           <button id="addExample" class="button secondary" type="button">
             + Dodaj słowo / zdanie
           </button>
@@ -156,10 +178,11 @@
             <input id="importFile" type="file" accept=".json,application/json">
           </label>
         </div>
+
         <p id="dataMessage" class="status" aria-live="polite"></p>
 
         <p class="notice">
-          „Scal” aktualizuje rekordy o tym samym kanji i dodaje nowe.
+          „Scal” aktualizuje kanji o tym samym znaku i dodaje nowe.
           „Zastąp” wczytuje wybrany plik jako całą bazę.
         </p>
       </section>
@@ -170,7 +193,7 @@
         <h2>Quiz kanji</h2>
         <p class="muted">Wybierz poprawne znaczenie znaku.</p>
         <div id="quizContent"></div>
-        <button id="startQuiz" class="button" type="button">Rozpocznij quiz</button>
+        <button id="startQuiz" class="button" type="button">Następne pytanie</button>
       </section>
     </section>
 
@@ -185,18 +208,18 @@
           </select>
         </label>
         <p class="notice">
-          Gdy polskie tłumaczenie jest puste, przy języku polskim wyświetli się
-          angielskie. JLPT jest przybliżony. Oficjalne klasy 1–6 dotyczą kanji
-          szkoły podstawowej; dla junior high nie ma przydziału każdego znaku
-          do konkretnej klasy.
+          Jeśli polskie tłumaczenie jest puste, przy ustawieniu polskiego
+          wyświetli się angielskie. JLPT jest oznaczeniem przybliżonym.
+          Oficjalne klasy 1–6 dotyczą kanji szkoły podstawowej.
         </p>
       </section>
     </section>
   </main>
 
   <footer>
-    Japońskie znaki korzystają z fontów dostępnych na urządzeniu
-    (m.in. Hiragino, Yu Gothic, Meiryo lub Noto Sans JP).
+    Kanji używają fontu Klee One, jeśli jest dostępny, z fontami systemowymi
+    jako zamiennikami. Rozpoznawanie mowy zależy od przeglądarki i uprawnień
+    mikrofonu.
   </footer>
 </body>
 </html>

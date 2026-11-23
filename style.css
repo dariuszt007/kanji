@@ -164,7 +164,7 @@ textarea { min-height: 76px; resize: vertical; }
 }
 
 .glyph, .bigkanji, .daily-kanji, .example-ja,
-.japanese-text, ruby {
+.japanese-text, ruby, .furigana-item .kanji-label {
   font-family: var(--font-ja);
 }
 
@@ -173,7 +173,7 @@ textarea { min-height: 76px; resize: vertical; }
   min-height: 50px;
   color: #20262c;
   font-size: 40px;
-  line-height: 1.5;
+  line-height: 1.7;
 }
 
 .tile small {
@@ -195,7 +195,7 @@ rt {
 
 .bigkanji {
   font-size: 76px;
-  line-height: 1.6;
+  line-height: 1.8;
 }
 
 .hero {
@@ -237,7 +237,7 @@ rt {
 
 .daily-kanji {
   font-size: 58px;
-  line-height: 1.7;
+  line-height: 1.8;
 }
 
 .button-row { margin-top: 14px; }
@@ -275,14 +275,15 @@ rt {
   display: grid;
   grid-template-rows: auto auto;
   gap: 5px;
-  min-width: 62px;
+  min-width: 64px;
   max-width: 100px;
   text-align: center;
 }
 
 .furigana-item .kanji-label {
   min-height: 38px;
-  font: 28px/1.4 var(--font-ja);
+  font-size: 28px;
+  line-height: 1.4;
   color: var(--ink);
 }
 
@@ -296,6 +297,20 @@ rt {
   flex-basis: 100%;
   margin: 0;
   font-size: 12px;
+}
+
+.sentence-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.sentence-status {
+  min-height: 1.4em;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .notice {
@@ -361,7 +376,6 @@ footer {
 
 @media (max-width: 700px) {
   body { font-size: 15px; line-height: 1.55; }
-
   .site-header { padding: 14px 16px; }
   .site-header h1 { font-size: 20px; }
 

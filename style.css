@@ -163,8 +163,13 @@ textarea { min-height: 76px; resize: vertical; }
   box-shadow: 0 0 0 2px #b3483822;
 }
 
-.glyph, .bigkanji, .daily-kanji, .example-ja,
-.japanese-text, ruby, .furigana-item .kanji-label {
+.glyph,
+.bigkanji,
+.daily-kanji,
+.example-ja,
+.japanese-text,
+ruby,
+.furigana-item .kanji-label {
   font-family: var(--font-ja);
 }
 
@@ -186,6 +191,7 @@ textarea { min-height: 76px; resize: vertical; }
 }
 
 ruby { ruby-position: over; }
+
 rt {
   font-size: .48em;
   line-height: 1;
@@ -386,7 +392,11 @@ footer {
   }
 
   .header-status { grid-column: 1 / -1; }
-  .header-actions button { width: 100%; padding: 9px 8px; font-size: 14px; }
+  .header-actions button {
+    width: 100%;
+    padding: 9px 8px;
+    font-size: 14px;
+  }
 
   main { margin: 14px auto 40px; padding: 0 12px; }
 
@@ -426,7 +436,11 @@ footer {
   .button-row { align-items: stretch; }
   .button-row button { flex: 1 1 140px; }
 
-  .form-grid, .example-editor-grid { grid-template-columns: 1fr; }
+  .form-grid,
+  .example-editor-grid {
+    grid-template-columns: 1fr;
+  }
+
   footer { padding: 0 12px 20px; }
 }
 

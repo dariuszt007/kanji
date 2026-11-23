@@ -14,6 +14,7 @@
   >
 
   <link rel="stylesheet" href="./style.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="./app.js" defer></script>
 </head>
 <body>
@@ -23,22 +24,48 @@
       <p>Kanji i japońskie słownictwo — ucz się we własnym tempie</p>
     </div>
 
-    <div class="header-actions">
+    <div class="header-tools">
       <span id="status" class="header-status">Wczytuję data.json…</span>
-      <button id="refresh" class="button secondary" type="button">
-        Odśwież z JSON
-      </button>
-      <button id="copyJson" class="button" type="button">
-        Kopiuj JSON
-      </button>
+
+      <div class="excel-controls">
+        <label class="import-mode-label" for="importMode">Tryb importu Excel</label>
+        <select id="importMode" aria-label="Tryb importu Excela">
+          <option value="merge">Scal z obecną bazą</option>
+          <option value="replace">Zastąp całą bazę</option>
+        </select>
+
+        <input
+          id="excelFile"
+          class="visually-hidden"
+          type="file"
+          accept=".xlsx,.xls"
+        >
+        <button id="importExcel" class="button secondary" type="button">
+          Import Excel
+        </button>
+        <button id="exportExcel" class="button" type="button">
+          Eksport Excel
+        </button>
+      </div>
+
+      <div class="header-actions">
+        <button id="refresh" class="button secondary" type="button">
+          Odśwież z JSON
+        </button>
+        <button id="copyJson" class="button secondary" type="button">
+          Kopiuj JSON
+        </button>
+      </div>
+
+      <span id="dataMessage" class="header-status" aria-live="polite"></span>
     </div>
   </header>
 
   <main>
     <nav class="tabs" aria-label="Główna nawigacja">
       <button class="tab active" data-tab="learn" type="button">Nauka</button>
-      <button class="tab" data-tab="manage" type="button">Edytuj / dodaj</button>
-      <button class="tab" data-tab="quiz" type="button">Quiz</button>
+      <button class="tab" data-tab="add" type="button">Dodaj kanji</button>
+      <button class="tab" data-tab="flashcards" type="button">Fiszki</button>
       <button class="tab" data-tab="settings" type="button">Ustawienia</button>
     </nav>
 
@@ -81,9 +108,7 @@
           </select>
         </label>
 
-        <button id="clear" class="button secondary" type="button">
-          Wyczyść
-        </button>
+        <button id="clear" class="button secondary" type="button">Wyczyść</button>
       </section>
 
       <div class="columns">
@@ -102,17 +127,15 @@
       </div>
     </section>
 
-    <section id="manage" class="view hidden">
+    <section id="add" class="view hidden">
       <section class="panel">
-        <h2 id="formTitle">Dodaj kanji</h2>
+        <h2>Dodaj nowe kanji</h2>
         <p class="muted">
-          Zmiany zapisują się lokalnie w tej przeglądarce. Pobierz JSON i wgraj
-          go do repozytorium, aby zapisać je na GitHubie.
+          Ten formularz dodaje nowy znak do lokalnej bazy. Nie służy do edycji
+          istniejących kanji.
         </p>
 
         <form id="kanjiForm">
-          <input type="hidden" id="originalCharacter">
-
           <div class="form-grid">
             <label>
               Kanji *
@@ -173,9 +196,10 @@
           </div>
 
           <section class="furigana-section">
-            <h3>Furigana kanji</h3>
+            <h3>Furigana nowego kanji</h3>
             <p class="muted">
-              Wpisz odczyt osobno przy każdym kanji. Kana nie dostaje furigany.
+              Wpisz odczyt osobno przy każdym kanji. Kana i interpunkcja nie
+              otrzymują furigany.
             </p>
             <div id="characterFuriganaEditor" class="furigana-editor"></div>
           </section>
@@ -189,7 +213,7 @@
             ></textarea>
           </label>
 
-          <h3 class="examples-title">Słowa i zdania</h3>
+          <h3 class="examples-title">Przykładowe słowa i zdania</h3>
           <div id="examples"></div>
 
           <button id="addExample" class="button secondary" type="button">
@@ -197,48 +221,61 @@
           </button>
 
           <div class="button-row">
-            <button class="button" type="submit">Zapisz kanji</button>
-            <button id="newEntry" class="button secondary" type="button">
-              Nowy wpis
-            </button>
-            <button id="exportFile" class="button secondary" type="button">
-              Pobierz pełny JSON
+            <button class="button" type="submit">Dodaj kanji</button>
+            <button id="resetForm" class="button secondary" type="button">
+              Wyczyść formularz
             </button>
           </div>
         </form>
-
-        <div class="form-grid import-controls">
-          <label>
-            Tryb importu
-            <select id="importMode">
-              <option value="merge">Scal z obecną bazą</option>
-              <option value="replace">Zastąp całą bazę</option>
-            </select>
-          </label>
-
-          <label>
-            Importuj plik JSON
-            <input id="importFile" type="file" accept=".json,application/json">
-          </label>
-        </div>
-
-        <p id="dataMessage" class="status" aria-live="polite"></p>
-
-        <p class="notice">
-          „Scal” aktualizuje rekordy o tym samym kanji i dodaje nowe.
-          „Zastąp” wczytuje wybrany plik jako całą bazę.
-        </p>
       </section>
     </section>
 
-    <section id="quiz" class="view hidden">
-      <section class="panel">
-        <h2>Quiz kanji</h2>
-        <p class="muted">Wybierz poprawne znaczenie znaku.</p>
-        <div id="quizContent"></div>
-        <button id="startQuiz" class="button" type="button">
-          Następne pytanie
-        </button>
+    <section id="flashcards" class="view hidden">
+      <section class="panel flashcard-panel">
+        <div class="flashcard-heading">
+          <div>
+            <h2>Fiszki kanji</h2>
+            <p class="muted">Najpierw przypomnij sobie znaczenie, potem odkryj odpowiedź.</p>
+          </div>
+          <label class="mastered-filter">
+            <input id="hideMastered" type="checkbox">
+            Ukryj opanowane
+          </label>
+        </div>
+
+        <p id="flashcardProgress" class="flashcard-progress"></p>
+
+        <article id="flashcard" class="flashcard" aria-live="polite">
+          <div id="flashcardFront" class="flashcard-front">
+            <p class="flashcard-label">KANJI</p>
+            <div id="flashcardKanji" class="flashcard-kanji"></div>
+            <p class="flashcard-prompt">Spróbuj przypomnieć sobie odczyt i znaczenie.</p>
+          </div>
+          <div id="flashcardBack" class="flashcard-back hidden"></div>
+        </article>
+
+        <div class="flashcard-actions">
+          <button id="previousFlashcard" class="button secondary" type="button">
+            Poprzednia
+          </button>
+          <button id="revealFlashcard" class="button" type="button">
+            Pokaż odpowiedź
+          </button>
+          <button id="nextFlashcard" class="button secondary" type="button">
+            Następna
+          </button>
+        </div>
+
+        <div class="flashcard-secondary-actions">
+          <button id="markMastered" class="button secondary" type="button">
+            Oznacz jako opanowane
+          </button>
+          <button id="shuffleFlashcards" class="button secondary" type="button">
+            Losuj kolejność
+          </button>
+        </div>
+
+        <p id="flashcardMessage" class="status" aria-live="polite"></p>
       </section>
     </section>
 
@@ -257,7 +294,7 @@
 
         <p class="notice">
           Jeśli polskie tłumaczenie jest puste, przy ustawieniu polskiego
-          wyświetli się angielskie. JLPT jest oznaczeniem przybliżonym.
+          wyświetli się angielskie. Poziom JLPT jest oznaczeniem przybliżonym.
         </p>
       </section>
     </section>
